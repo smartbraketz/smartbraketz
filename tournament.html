@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tournament</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --c1: #2563eb; --c2: #1e40af; --c3: #ffffff;
+      --c1-10: color-mix(in srgb, var(--c1) 10%, transparent);
+      --c1-20: color-mix(in srgb, var(--c1) 20%, transparent);
+      --c1-30: color-mix(in srgb, var(--c1) 30%, transparent);
+      --c1-50: color-mix(in srgb, var(--c1) 50%, transparent);
+      --c1-light: color-mix(in srgb, var(--c1) 80%, white);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: #080808; color: #f0f0f0; min-height: 100vh; }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative; overflow: hidden;
+      padding: 4rem 2rem 3rem; text-align: center;
+    }
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 100% 80% at 50% -10%, var(--c1-50), transparent 65%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, var(--c1-20), transparent 60%),
+        radial-gradient(ellipse 40% 30% at 10% 90%, color-mix(in srgb, var(--c2) 20%, transparent), transparent 60%);
+    }
+    .hero-grid {
+      position: absolute; inset: 0; z-index: 1;
+      background-image: linear-gradient(var(--c1-10) 1px, transparent 1px), linear-gradient(90deg, var(--c1-10) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 80%);
+    }
+    .hero-content { position: relative; z-index: 2; }
+    .hero-eyebrow {
+      display: inline-flex; gap: 6px; align-items: center;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--c1-light);
+      background: var(--c1-20); border: 1px solid var(--c1-30);
+      border-radius: 99px; padding: 5px 14px; margin-bottom: 1.25rem;
+    }
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 6vw, 3.75rem); font-weight: 800;
+      line-height: 1.05; letter-spacing: -0.03em;
+      color: #fff; margin-bottom: 0.75rem;
+      text-shadow: 0 0 80px var(--c1-50);
+    }
+    .hero-meta { font-size: 15px; color: rgba(255,255,255,0.45); margin-bottom: 1.5rem; }
+    .hero-badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .badge {
+      font-size: 12px; font-weight: 500; padding: 5px 14px; border-radius: 99px;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6);
+    }
+    .badge.accent {
+      background: var(--c1-20); border-color: var(--c1-30); color: var(--c1-light); font-weight: 600;
+    }
+
+    /* ── Nav ── */
+    .nav-wrap {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(8,8,8,0.9); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--c1-20);
+    }
+    .tabs { display: flex; max-width: 960px; margin: 0 auto; padding: 0 1rem; overflow-x: auto; }
+    .tab {
+      flex-shrink: 0; padding: 14px 18px;
+      font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.35);
+      cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.2s;
+    }
+    .tab:hover { color: rgba(255,255,255,0.65); }
+    .tab.active { color: var(--c1-light); border-bottom-color: var(--c1); }
+
+    /* ── Content ── */
+    .content { max-width: 960px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .panel { display: none; }
+    .panel.visible { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: #111; border: 1px solid var(--c1-20);
+      border-radius: 16px; padding: 1.5rem; margin-bottom: 1rem;
+      box-shadow: 0 0 30px var(--c1-10);
+    }
+    .card-title {
+      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--c1-light); margin-bottom: 1.25rem;
+    }
+
+    /* ── Info ── */
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .info-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.25); margin-bottom: 4px; }
+    .info-value { font-size: 15px; font-weight: 500; color: #fff; }
+
+    /* ── Bracket ── */
+    .bracket-wrap { overflow-x: auto; padding-bottom: 0.5rem; }
+    .bracket { display: flex; gap: 1.5rem; padding: 0.5rem 0; min-width: max-content; }
+    .round { display: flex; flex-direction: column; }
+    .round-title {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--c1-light); opacity: 0.6; margin-bottom: 10px; text-align: center;
+    }
+    .match {
+      background: #181818; border: 1px solid var(--c1-20);
+      border-radius: 10px; width: 170px; margin-bottom: 10px; overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .match:hover { border-color: var(--c1-30); box-shadow: 0 0 16px var(--c1-10); }
+    .match-team {
+      padding: 9px 12px; display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.15s;
+    }
+    .match-team:last-child { border-bottom: none; }
+    .match-team.winner { background: var(--c1-10); }
+    .match-team.winner .team-name { color: var(--c1-light); font-weight: 600; }
+    .team-name { font-size: 12px; flex: 1; color: rgba(255,255,255,0.6); }
+    .team-score { font-size: 13px; font-weight: 700; color: #fff; min-width: 24px; text-align: right; }
+    .admin-score-input {
+      width: 40px; font-size: 12px; font-weight: 700; display: none;
+      background: var(--c1-20); border: 1px solid var(--c1-30);
+      border-radius: 6px; padding: 2px 4px; text-align: center; color: #fff;
+    }
+
+    /* ── Schedule ── */
+    .schedule-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .schedule-item:last-child { border-bottom: none; }
+    .schedule-time { font-size: 12px; font-weight: 700; color: var(--c1-light); min-width: 65px; }
+    .schedule-match { font-size: 13px; color: rgba(255,255,255,0.75); flex: 1; }
+    .schedule-venue {
+      font-size: 11px; font-weight: 600; color: var(--c1-light);
+      background: var(--c1-10); border: 1px solid var(--c1-20);
+      padding: 3px 10px; border-radius: 99px;
+    }
+
+    /* ── Assignments ── */
+    .assignments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 12px; }
+    .assignment-card {
+      background: #181818; border: 1px solid var(--c1-20);
+      border-radius: 12px; padding: 14px; text-align: center; transition: all 0.2s;
+    }
+    .assignment-card.occupied {
+      border-color: var(--c1-30); background: var(--c1-10);
+      box-shadow: 0 0 20px var(--c1-10);
+    }
+    .assignment-num {
+      font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+      color: var(--c1-light); margin-bottom: 6px;
+    }
+    .assignment-team { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.55); line-height: 1.4; }
+    .assignment-empty { font-size: 11px; color: rgba(255,255,255,0.15); }
+
+    /* ── Admin bar ── */
+    .admin-bar {
+      background: var(--c1-20); border-bottom: 1px solid var(--c1-30);
+      color: white; padding: 10px 1.5rem;
+      display: flex; align-items: center; justify-content: space-between; font-size: 13px;
+    }
+    .admin-bar.hidden { display: none; }
+    .admin-badge {
+      background: var(--c1); color: #fff; font-weight: 700;
+      padding: 2px 10px; border-radius: 99px; font-size: 10px; letter-spacing: 0.05em;
+    }
+    .admin-exit { color: rgba(255,255,255,0.4); cursor: pointer; font-size: 12px; }
+    .admin-exit:hover { color: white; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center; z-index: 100;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal {
+      background: #111; border: 1px solid var(--c1-30);
+      border-radius: 20px; padding: 2rem; width: 100%; max-width: 380px;
+      box-shadow: 0 0 60px var(--c1-20);
+    }
+    .modal h3 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .modal p { font-size: 13px; color: rgba(255,255,255,0.45); margin-bottom: 1.25rem; }
+    .modal input, .modal select {
+      width: 100%; padding: 12px 14px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--c1-20);
+      border-radius: 10px; font-size: 14px; color: #fff; outline: none;
+      margin-bottom: 10px; font-family: 'DM Sans', sans-serif;
+    }
+    .modal input:focus, .modal select:focus { border-color: var(--c1); }
+    .modal-cancel { font-size: 12px; color: rgba(255,255,255,0.25); cursor: pointer; text-align: center; margin-top: 12px; }
+    .modal-cancel:hover { color: rgba(255,255,255,0.5); }
+    .login-error { font-size: 13px; color: #f87171; margin-top: 4px; display: none; }
+
+    /* ── Buttons ── */
+    .btn {
+      width: 100%; padding: 12px; background: var(--c1); color: white;
+      font-size: 14px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-outline {
+      width: 100%; padding: 12px;
+      background: transparent; color: var(--c1-light);
+      font-size: 14px; font-weight: 600;
+      border: 1px solid var(--c1-30); border-radius: 10px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+    }
+    .btn-outline:hover { background: var(--c1-10); }
+    .btn-ghost {
+      padding: 8px 16px; font-size: 12px; font-weight: 600;
+      background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.5);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .btn-sm {
+      padding: 9px 18px; font-size: 13px; font-weight: 600;
+      background: var(--c1); color: white; border: none; border-radius: 8px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-danger {
+      padding: 8px 16px; font-size: 12px; font-weight: 600;
+      background: rgba(239,68,68,0.1); color: #f87171;
+      border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; cursor: pointer;
+    }
+    .btn-approve {
+      padding: 6px 14px; font-size: 11px; font-weight: 600;
+      background: var(--c1-20); color: var(--c1-light);
+      border: 1px solid var(--c1-30); border-radius: 6px; cursor: pointer;
+    }
+
+    /* ── Checkin ── */
+    .checkin-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .checkin-item:last-child { border-bottom: none; }
+    .checkin-name { font-size: 14px; color: rgba(255,255,255,0.75); }
+    .checkin-pill { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 99px; }
+    .checkin-pill.in { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.2); }
+    .checkin-pill.out { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.25); cursor: pointer; border: 1px solid transparent; }
+    .checkin-pill.out:hover { background: var(--c1-10); color: var(--c1-light); border-color: var(--c1-20); }
+
+    /* ── Teams / pending ── */
+    .team-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .team-row:last-child { border-bottom: none; }
+    .team-row-name { font-size: 14px; color: rgba(255,255,255,0.7); }
+    .team-remove { font-size: 11px; color: rgba(255,255,255,0.15); cursor: pointer; }
+    .team-remove:hover { color: #f87171; }
+
+    .pending-card {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .pending-info { flex: 1; }
+    .pending-name { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 2px; }
+    .pending-players { font-size: 12px; color: rgba(255,255,255,0.35); }
+    .pending-actions { display: flex; gap: 6px; }
+
+    /* ── Add row ── */
+    .add-row { display: flex; gap: 8px; margin-top: 1rem; }
+    .add-row input {
+      flex: 1; padding: 10px 14px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--c1-20);
+      border-radius: 10px; font-size: 14px; color: #fff; outline: none;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .add-row input:focus { border-color: var(--c1); }
+
+    /* ── Toggle ── */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+    .toggle-label { font-size: 13px; color: rgba(255,255,255,0.65); }
+    .toggle { position: relative; width: 42px; height: 24px; cursor: pointer; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; border-radius: 99px;
+      background: rgba(255,255,255,0.1); transition: 0.2s;
+    }
+    .toggle-slider:before {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      left: 3px; top: 3px; border-radius: 50%; background: white; transition: 0.2s;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--c1); }
+    .toggle input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+    /* ── QR ── */
+    #qrcode canvas, #qrcode img { border-radius: 8px; }
+    .qr-wrap { background: white; display: inline-block; padding: 12px; border-radius: 12px; margin: 1rem auto; }
+
+    /* ── Register landing ── */
+    .landing-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 1rem; }
+    .landing-card {
+      background: #181818; border: 1px solid var(--c1-20);
+      border-radius: 14px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s;
+    }
+    .landing-card:hover { background: var(--c1-10); border-color: var(--c1-30); box-shadow: 0 0 20px var(--c1-10); }
+    .landing-card .icon { font-size: 32px; margin-bottom: 10px; }
+    .landing-card .title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .landing-card .desc { font-size: 12px; color: rgba(255,255,255,0.35); }
+
+    .empty-state { text-align: center; padding: 2rem; color: rgba(255,255,255,0.2); font-size: 13px; }
+    .loading { text-align: center; padding: 4rem; color: rgba(255,255,255,0.25); font-size: 14px; }
+    .divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 1rem 0; }
+
+    /* ── Edit info grid ── */
+    .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .edit-field { display: flex; flex-direction: column; gap: 5px; }
+    .edit-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.3); }
+    .edit-input {
+      padding: 9px 12px; font-size: 13px; color: #fff; font-family: 'DM Sans', sans-serif;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--c1-20);
+      border-radius: 8px; outline: none; width: 100%;
+    }
+    .edit-input:focus { border-color: var(--c1); }
+    select.edit-input option { background: #1a1a1a; }
+
+    /* ── Venue slot ── */
+    .venue-slot {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .venue-slot:last-child { border-bottom: none; }
+    .venue-slot-name { font-size: 13px; color: rgba(255,255,255,0.7); }
+    .venue-slot-team { font-size: 12px; color: var(--c1-light); }
+    .venue-slot-remove { font-size: 11px; color: rgba(255,255,255,0.15); cursor: pointer; }
+    .venue-slot-remove:hover { color: #f87171; }
+
+    /* ── Assignment card with edit ── */
+    .assignment-card select {
+      width: 100%; margin-top: 6px; padding: 4px 6px;
+      background: rgba(255,255,255,0.06); border: 1px solid var(--c1-20);
+      border-radius: 6px; font-size: 11px; color: #fff;
+      font-family: 'DM Sans', sans-serif; outline: none; display: none;
+    }
+    .assignment-card.admin-mode select { display: block; }
+
+    /* ── Advance button in bracket ── */
+    .advance-btn {
+      display: none; font-size: 10px; font-weight: 700;
+      background: var(--c1-20); color: var(--c1-light);
+      border: 1px solid var(--c1-30); border-radius: 4px;
+      padding: 2px 7px; cursor: pointer; margin-left: 4px;
+      white-space: nowrap;
+    }
+    .admin-mode-bracket .advance-btn { display: inline-block; }
+  
+  </style>
+</head>
+<body>
+
+<!-- Admin login -->
+<div class="modal-overlay hidden" id="adminLogin">
+  <div class="modal">
+    <h3>Admin Access</h3>
+    <p>Enter your password to manage this tournament.</p>
+    <input type="password" id="adminPwInput" placeholder="Admin password" />
+    <button class="btn" id="adminLoginBtn">Login</button>
+    <div class="login-error" id="loginError">Incorrect password.</div>
+    <div class="modal-cancel" id="cancelLogin">Cancel</div>
+  </div>
+</div>
+
+<!-- Register modal -->
+<div class="modal-overlay hidden" id="registerModal">
+  <div class="modal">
+    <h3 id="registerTitle">Join Tournament</h3>
+    <p id="registerSubtitle">Enter your team info below.</p>
+    <input type="text" id="regTeamName" placeholder="Team name" />
+    <input type="text" id="regPlayers" placeholder="Player name(s), e.g. John & Sarah" />
+    <button class="btn" id="registerBtn">Submit Registration</button>
+    <div class="modal-cancel" id="cancelRegister">Cancel</div>
+  </div>
+</div>
+
+<!-- Watch or Register landing -->
+<div class="modal-overlay hidden" id="landingModal">
+  <div class="modal" style="max-width:440px">
+    <h3 id="landingTitle">Welcome!</h3>
+    <p id="landingSubtitle">What would you like to do?</p>
+    <div class="landing-options">
+      <div class="landing-card" id="landingRegister">
+        <div class="icon">✍️</div>
+        <div class="title">Register</div>
+        <div class="desc">Add your team to this tournament</div>
+      </div>
+      <div class="landing-card" id="landingWatch">
+        <div class="icon">👀</div>
+        <div class="title">Watch</div>
+        <div class="desc">Follow the bracket live</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Admin bar -->
+<div class="admin-bar hidden" id="adminBar">
+  <span><span class="admin-badge">ADMIN</span> &nbsp; Managing this tournament</span>
+  <span class="admin-exit" id="exitAdmin">Exit</span>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow" id="heroEyebrow">Live Tournament</div>
+    <h1 id="headerTitle">Loading...</h1>
+    <div class="hero-meta" id="headerMeta"></div>
+    <div class="hero-badges">
+      <span class="badge accent" id="headerSport"></span>
+      <span class="badge" id="headerVenue"></span>
+      <span class="badge" id="headerFee" style="display:none"></span>
+      <span class="badge" id="headerTeamSize" style="display:none"></span>
+    </div>
+  </div>
+</div>
+
+<!-- Nav -->
+<div class="nav-wrap">
+  <div class="tabs">
+    <div class="tab active" data-panel="info">Info</div>
+    <div class="tab" data-panel="bracket">Bracket</div>
+    <div class="tab" data-panel="schedule">Schedule</div>
+    <div class="tab" data-panel="assignments">Assignments</div>
+    <div class="tab" data-panel="checkin" id="checkinTab" style="display:none">Check-In</div>
+    <div class="tab" data-panel="admin-tools" id="adminToolsTab" style="display:none">⚙ Admin</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- INFO -->
+  <div class="panel visible" id="panel-info">
+    <div class="loading" id="loadingMsg">Loading tournament...</div>
+    <div id="infoContent" style="display:none">
+      <div class="card">
+        <div class="card-title">Tournament Details</div>
+        <div class="info-grid" id="infoGrid"></div>
+      </div>
+      <div class="card" style="text-align:center">
+        <p style="font-size:13px;color:rgba(255,255,255,0.3);margin-bottom:12px">Player? Scan the QR code to register or follow along.</p>
+        <button class="btn-ghost" id="adminAccessBtn" style="margin-right:8px">Admin Access</button>
+        <button class="btn-ghost" id="openRegisterBtn">Register My Team</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BRACKET -->
+  <div class="panel" id="panel-bracket">
+    <div class="card">
+      <div class="card-title">Bracket</div>
+      <div class="bracket-wrap"><div class="bracket" id="bracketContainer"></div></div>
+    </div>
+  </div>
+
+  <!-- SCHEDULE -->
+  <div class="panel" id="panel-schedule">
+    <div class="card">
+      <div class="card-title">Schedule</div>
+      <div id="scheduleList"></div>
+    </div>
+  </div>
+
+  <!-- ASSIGNMENTS -->
+  <div class="panel" id="panel-assignments">
+    <div class="card">
+      <div class="card-title" id="assignmentsTitle">Assignments</div>
+      <div class="assignments-grid" id="assignmentsGrid"></div>
+    </div>
+  </div>
+
+  <!-- CHECKIN -->
+  <div class="panel" id="panel-checkin">
+    <div class="card">
+      <div class="card-title">Check-In</div>
+      <div id="checkinList"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN TOOLS -->
+  <div class="panel" id="panel-admin-tools">
+
+    <!-- QR Code -->
+    <div class="card" style="text-align:center">
+      <div class="card-title">Share This Tournament</div>
+      <p style="font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:1rem">Players scan this to register or follow the bracket.</p>
+      <div class="qr-wrap"><div id="qrcode"></div></div>
+      <p style="font-size:11px;color:rgba(255,255,255,0.2);margin-top:8px;word-break:break-all" id="shareUrlText"></p>
+      <button class="btn-ghost" style="margin-top:12px;width:auto;padding:8px 20px" id="copyLinkBtn">Copy Link</button>
+    </div>
+
+    <!-- Registration toggle -->
+    <div class="card">
+      <div class="card-title">Registration Settings</div>
+      <div class="toggle-row">
+        <span class="toggle-label">Auto-approve registrations</span>
+        <label class="toggle">
+          <input type="checkbox" id="autoApproveToggle" />
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <p style="font-size:12px;color:rgba(255,255,255,0.25);margin-top:4px">When off, you approve each team before they appear in the bracket.</p>
+    </div>
+
+    <!-- Pending approvals -->
+    <div class="card" id="pendingCard" style="display:none">
+      <div class="card-title">Pending Approvals <span id="pendingCount" style="background:var(--c1);color:white;font-size:10px;padding:2px 8px;border-radius:99px;margin-left:6px"></span></div>
+      <div id="pendingList"></div>
+    </div>
+
+    <!-- Teams -->
+    <div class="card">
+      <div class="card-title">Teams</div>
+      <div id="teamsList"></div>
+      <div class="add-row">
+        <input type="text" id="newTeamInput" placeholder="Add team or player name..." />
+        <button class="btn-sm" id="addTeamBtn">Add</button>
+      </div>
+    </div>
+
+    <!-- Edit Tournament Info -->
+    <div class="card">
+      <div class="card-title">Edit Tournament Info</div>
+      <div class="edit-grid">
+        <div class="edit-field"><label class="edit-label">Tournament Name</label><input class="edit-input" id="edit-name" type="text" placeholder="Tournament Name"/></div>
+        <div class="edit-field"><label class="edit-label">Date</label><input class="edit-input" id="edit-date" type="text" placeholder="July 3-5, 2026"/></div>
+        <div class="edit-field"><label class="edit-label">Location</label><input class="edit-input" id="edit-location" type="text" placeholder="Venue name"/></div>
+        <div class="edit-field"><label class="edit-label">City</label><input class="edit-input" id="edit-city" type="text" placeholder="City, State"/></div>
+        <div class="edit-field"><label class="edit-label">Entry Fee</label><input class="edit-input" id="edit-fee" type="text" placeholder="$25 per player"/></div>
+        <div class="edit-field"><label class="edit-label">Format</label>
+          <select class="edit-input" id="edit-format">
+            <option>Single Elimination</option>
+            <option>Double Elimination</option>
+            <option>Round Robin</option>
+            <option>Pool + Bracket</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" style="margin-top:1rem" id="saveInfoBtn">Save Changes</button>
+    </div>
+
+    <!-- Venue Setup -->
+    <div class="card">
+      <div class="card-title" id="venueEditorTitle">Court Setup</div>
+      <p style="font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:1rem">Add the specific courts, fields, or pits being used for this event.</p>
+      <div id="venueSlotsList"></div>
+      <div class="add-row" style="margin-top:0.75rem">
+        <input type="text" id="newVenueInput" placeholder="e.g. Court 1, Field A, Pit 7" />
+        <button class="btn-sm" id="addVenueBtn">Add</button>
+      </div>
+      <button class="btn-outline" style="margin-top:0.75rem" id="randomizeVenueBtn">🎲 Re-randomize Assignments</button>
+    </div>
+
+    <!-- Actions -->
+    <div class="card">
+      <div class="card-title">Actions</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn" onclick="rebuildBracket()">🔀 Randomize & Rebuild Bracket</button>
+        <button class="btn-outline" onclick="switchTab('checkin')">✅ Go to Check-In</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAzoP3hdTD7hLQotUViMN8F-bcFw24Tc1M",
+  authDomain: "smartbraketz-26e60.firebaseapp.com",
+  projectId: "smartbraketz-26e60",
+  storageBucket: "smartbraketz-26e60.firebasestorage.app",
+  messagingSenderId: "276583190387",
+  appId: "1:276583190387:web:c8f20d6859355525667f06"
+};
+const fApp = initializeApp(firebaseConfig);
+const db   = getFirestore(fApp);
+
+const params       = new URLSearchParams(window.location.search);
+const tournamentId = params.get('id');
+const showLanding  = params.get('register') === '1';
+let data = {}, isAdmin = false, checkedIn = {}, assignments = [];
+
+if (!tournamentId) {
+  document.getElementById('loadingMsg').textContent = 'No tournament ID in URL.';
+} else {
+  const ref = doc(db, 'tournaments', tournamentId);
+
+  onSnapshot(ref, snap => {
+    if (!snap.exists()) { document.getElementById('loadingMsg').textContent = 'Tournament not found.'; return; }
+    data = snap.data();
+    checkedIn  = data.checkedIn  || {};
+    assignments= data.assignments|| [];
+    applyTheme();
+    populatePage();
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('infoContent').style.display = 'block';
+    if (showLanding && !isAdmin) showLandingModal();
+  });
+
+  window.save = async (fields) => await updateDoc(ref, fields);
+}
+
+// ── Theme ──
+function applyTheme() {
+  const c = data.colors || ['#2563eb','#1e40af','#fff'];
+  document.documentElement.style.setProperty('--c1', c[0]);
+  document.documentElement.style.setProperty('--c2', c[1]||c[0]);
+}
+
+// ── Populate ──
+function populatePage() {
+  document.title = data.name || 'Tournament';
+  document.getElementById('headerTitle').textContent   = data.name || 'Tournament';
+  document.getElementById('headerMeta').textContent    = [data.date, data.city||data.location].filter(Boolean).join(' • ');
+  document.getElementById('headerSport').textContent   = data.sport || 'Sport';
+  document.getElementById('headerVenue').textContent   = data.venue || 'Courts';
+  document.getElementById('heroEyebrow').textContent   = data.sport ? data.sport + ' Tournament' : 'Live Tournament';
+  if (data.fee) { const el=document.getElementById('headerFee'); el.textContent=data.fee.startsWith('$')?data.fee:'$'+data.fee; el.style.display='inline'; }
+  if (data.teamSize) { const el=document.getElementById('headerTeamSize'); el.textContent=data.teamSize; el.style.display='inline'; }
+
+  document.getElementById('infoGrid').innerHTML = [
+    {label:'Date',      value:data.date},
+    {label:'Location',  value:data.location},
+    {label:'City',      value:data.city},
+    {label:'Sport',     value:data.sport},
+    {label:'Format',    value:data.format},
+    {label:'Team Size', value:data.teamSize},
+    {label:'Entry Fee', value:data.fee?(data.fee.startsWith('$')?data.fee:'$'+data.fee):null},
+  ].map(f=>`<div><div class="info-label">${f.label}</div><div class="info-value">${f.value||'—'}</div></div>`).join('');
+
+  const teams = data.teams&&data.teams.length ? data.teams : [];
+  buildBracket(teams, data.matches);
+  buildSchedule(teams);
+  buildAssignments(teams);
+  renderCheckin(teams);
+  renderTeamsList(teams);
+  renderPending();
+  if (isAdmin) setupQR();
+  if (isAdmin && document.getElementById('autoApproveToggle')) {
+    document.getElementById('autoApproveToggle').checked = !!data.autoApprove;
+  }
+}
+
+// ── QR Code ──
+function setupQR() {
+  const shareUrl = `${window.location.origin}${window.location.pathname}?id=${tournamentId}&register=1`;
+  document.getElementById('shareUrlText').textContent = shareUrl;
+  document.getElementById('qrcode').innerHTML = '';
+  new QRCode(document.getElementById('qrcode'), { text: shareUrl, width: 160, height: 160, colorDark: '#000', colorLight: '#fff', correctLevel: QRCode.CorrectLevel.M });
+  document.getElementById('copyLinkBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(shareUrl);
+    document.getElementById('copyLinkBtn').textContent = 'Copied!';
+    setTimeout(() => document.getElementById('copyLinkBtn').textContent = 'Copy Link', 2000);
+  });
+}
+
+// ── Shuffle ──
+function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+// ── Bracket ──
+function buildBracket(teams, savedMatches) {
+  const container = document.getElementById('bracketContainer');
+  container.innerHTML = '';
+  if (teams.length < 2) { container.innerHTML = '<p class="empty-state">Add at least 2 teams to generate a bracket.</p>'; return; }
+
+  let padded = [...teams];
+  while ((padded.length & (padded.length-1)) !== 0) padded.push('BYE');
+
+  const rounds = [];
+  let current = [...padded];
+  while (current.length > 1) {
+    const matches = [];
+    for (let i=0; i<current.length; i+=2) matches.push({t1:current[i],t2:current[i+1]||'BYE',s1:null,s2:null,winner:null});
+    rounds.push(matches);
+    current = matches.map(()=>'?');
+  }
+
+  const nameMap = {2:['Final'],4:['Semifinal','Final'],8:['Quarterfinal','Semifinal','Final'],16:['Round of 16','Quarterfinal','Semifinal','Final']};
+  const names = nameMap[padded.length] || rounds.map((_,i)=>`Round ${i+1}`);
+
+  if (savedMatches) {
+    savedMatches.forEach((round,ri) => {
+      round&&round.forEach((m,mi) => {
+        if (rounds[ri]&&rounds[ri][mi]) {
+          Object.assign(rounds[ri][mi],m);
+          if (m.winner===0&&ri+1<rounds.length) rounds[ri+1][Math.floor(mi/2)][mi%2===0?'t1':'t2']=m.t1;
+          if (m.winner===1&&ri+1<rounds.length) rounds[ri+1][Math.floor(mi/2)][mi%2===0?'t1':'t2']=m.t2;
+        }
+      });
+    });
+  }
+
+  rounds.forEach((round,ri) => {
+    const col = document.createElement('div');
+    col.className = 'round';
+    col.innerHTML = `<div class="round-title">${names[ri]||'Round '+(ri+1)}</div>`;
+    round.forEach((m,mi) => {
+      const el = document.createElement('div');
+      el.className = 'match';
+      el.innerHTML = `
+        <div class="match-team ${m.winner===0?'winner':''}" data-ri="${ri}" data-mi="${mi}" data-team="0">
+          <span class="team-name">${m.t1}</span>
+          <button class="advance-btn" data-ri="${ri}" data-mi="${mi}" data-team="0" title="Advance ${m.t1}">▶ Advance</button>
+          <span class="team-score">${m.s1!==null?m.s1:'—'}</span>
+          <input class="admin-score-input" type="number" value="${m.s1||''}" min="0" data-ri="${ri}" data-mi="${mi}" data-team="0"/>
+        </div>
+        <div class="match-team ${m.winner===1?'winner':''}" data-ri="${ri}" data-mi="${mi}" data-team="1">
+          <span class="team-name">${m.t2}</span>
+          <button class="advance-btn" data-ri="${ri}" data-mi="${mi}" data-team="1" title="Advance ${m.t2}">▶ Advance</button>
+          <span class="team-score">${m.s2!==null?m.s2:'—'}</span>
+          <input class="admin-score-input" type="number" value="${m.s2||''}" min="0" data-ri="${ri}" data-mi="${mi}" data-team="1"/>
+        </div>`;
+      col.appendChild(el);
+    });
+    container.appendChild(col);
+  });
+
+  container.querySelectorAll('.admin-score-input').forEach(input => {
+    if (isAdmin) input.style.display = 'inline-block';
+    input.addEventListener('change', async () => {
+      const allM = rounds.map(r=>r.map(m=>({...m})));
+      const ri=+input.dataset.ri, mi=+input.dataset.mi, team=+input.dataset.team;
+      if (team===0) allM[ri][mi].s1=+input.value; else allM[ri][mi].s2=+input.value;
+      const {s1,s2}=allM[ri][mi];
+      if (s1!==null&&s2!==null) allM[ri][mi].winner=s1>s2?0:1;
+      await window.save({matches:allM});
+    });
+  });
+
+  // Advance button — click to manually advance a team to next round
+  if (isAdmin) {
+    container.classList.add('admin-mode-bracket');
+    container.querySelectorAll('.advance-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const ri=+btn.dataset.ri, mi=+btn.dataset.mi, team=+btn.dataset.team;
+        const allM = rounds.map(r=>r.map(m=>({...m})));
+        allM[ri][mi].winner = team;
+        // Advance winner name to next round
+        if (ri+1 < rounds.length) {
+          const nextMi = Math.floor(mi/2);
+          const slot   = mi%2===0 ? 't1' : 't2';
+          const winner = team===0 ? allM[ri][mi].t1 : allM[ri][mi].t2;
+          allM[ri+1][nextMi][slot] = winner;
+        }
+        await window.save({matches:allM});
+      });
+    });
+  }
+}
+
+// ── Schedule ──
+function buildSchedule(teams) {
+  if (!teams.length) { document.getElementById('scheduleList').innerHTML='<p class="empty-state">No teams yet.</p>'; return; }
+  const vLabel = (data.venue||'Court').replace(/s$/,'');
+  const times  = ['8:00 AM','8:00 AM','9:00 AM','9:00 AM','10:00 AM','10:00 AM','11:00 AM','11:00 AM','12:00 PM','12:00 PM'];
+  const items  = [];
+  for (let i=0; i<teams.length-1; i+=2) items.push({time:times[items.length]||'TBD',match:`${teams[i]} vs ${teams[i+1]}`,venue:`${vLabel} ${(items.length%4)+1}`});
+  document.getElementById('scheduleList').innerHTML = items.map(s=>`
+    <div class="schedule-item">
+      <div class="schedule-time">${s.time}</div>
+      <div class="schedule-match">${s.match}</div>
+      <div class="schedule-venue">${s.venue}</div>
+    </div>`).join('');
+}
+
+// ── Assignments ──
+function buildAssignments(teams) {
+  const venueSlots = data.venueSlots && data.venueSlots.length ? data.venueSlots : null;
+  const vLabel = (data.venue||'Court').replace(/s$/,'');
+  document.getElementById('assignmentsTitle').textContent = `${data.venue||'Court'} Assignments`;
+
+  if (venueSlots) {
+    // Use named venue slots
+    document.getElementById('assignmentsGrid').innerHTML = venueSlots.map((s,i) => `
+      <div class="assignment-card ${s.team?'occupied':''} ${isAdmin?'admin-mode':''}">
+        <div class="assignment-num">${s.name}</div>
+        ${s.team ? `<div class="assignment-team">${s.team}</div>` : `<div class="assignment-empty">Available</div>`}
+        <select data-idx="${i}">
+          <option value="">-- Unassigned --</option>
+          ${(teams||[]).map(t=>`<option value="${t}" ${s.team===t||s.team&&s.team.includes(t)?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>`).join('');
+    if (isAdmin) {
+      document.querySelectorAll('.assignments-grid select').forEach(sel => {
+        sel.addEventListener('change', async () => {
+          const slots = [...(data.venueSlots||[])];
+          slots[+sel.dataset.idx].team = sel.value || null;
+          await window.save({venueSlots: slots});
+        });
+      });
+    }
+  } else {
+    // Fallback: auto-generate numbered slots
+    const numSlots = Math.max(4, Math.ceil(teams.length/2));
+    const pairs = assignments.length ? assignments : generateRandomPairs(teams);
+    document.getElementById('assignmentsGrid').innerHTML = Array.from({length:numSlots},(_,i)=>{
+      const pair = pairs[i];
+      return `<div class="assignment-card ${pair?'occupied':''} ${isAdmin?'admin-mode':''}">
+        <div class="assignment-num">${vLabel} ${i+1}</div>
+        ${pair?`<div class="assignment-team">${pair}</div>`:`<div class="assignment-empty">Available</div>`}
+        <select data-idx="${i}">
+          <option value="">-- Unassigned --</option>
+          ${(teams||[]).map(t=>`<option value="${t}" ${pair&&pair.includes(t)?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>`;
+    }).join('');
+    if (isAdmin) {
+      document.querySelectorAll('.assignments-grid select').forEach(sel => {
+        sel.addEventListener('change', async () => {
+          const newPairs = [...(data.assignments||generateRandomPairs(teams))];
+          newPairs[+sel.dataset.idx] = sel.value || null;
+          await window.save({assignments: newPairs});
+        });
+      });
+    }
+  }
+}
+
+function generateRandomPairs(teams) {
+  const shuffled = shuffle([...teams]);
+  return shuffled.reduce((acc,t,i)=>{ if(i%2===0) acc.push(shuffled[i+1]?`${t} vs ${shuffled[i+1]}`:t); return acc; },[]);
+}
+
+window.randomizeAssignments = async () => {
+  const newA = generateRandomPairs(data.teams||[]);
+  await window.save({assignments:newA});
+};
+
+// ── Checkin ──
+function renderCheckin(teams) {
+  if (!teams.length) { document.getElementById('checkinList').innerHTML='<p class="empty-state">No teams yet.</p>'; return; }
+  document.getElementById('checkinList').innerHTML = teams.map(t=>`
+    <div class="checkin-item">
+      <div class="checkin-name">${t}</div>
+      <div class="checkin-pill ${checkedIn[t]?'in':'out'}" data-team="${t}">
+        ${checkedIn[t]?'✓ Checked In':'Not arrived'}
+      </div>
+    </div>`).join('');
+  if (isAdmin) {
+    document.querySelectorAll('.checkin-pill.out').forEach(el=>{
+      el.addEventListener('click', async ()=>{
+        checkedIn[el.dataset.team]=true;
+        await window.save({checkedIn});
+      });
+    });
+  }
+}
+
+// ── Teams ──
+function renderTeamsList(teams) {
+  document.getElementById('teamsList').innerHTML = teams.length
+    ? teams.map((t,i)=>`
+        <div class="team-row">
+          <span class="team-row-name">${t}</span>
+          ${isAdmin?`<span class="team-remove" data-idx="${i}">Remove</span>`:''}
+        </div>`).join('')
+    : '<p class="empty-state" style="padding:8px 0">No teams yet.</p>';
+  if (isAdmin) {
+    document.querySelectorAll('.team-remove').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const t=[...(data.teams||[])]; t.splice(+btn.dataset.idx,1); await window.save({teams:t});
+      });
+    });
+  }
+}
+
+// ── Pending ──
+function renderPending() {
+  if (!isAdmin) return;
+  const pending = data.pending || [];
+  const card = document.getElementById('pendingCard');
+  card.style.display = pending.length ? 'block' : 'none';
+  document.getElementById('pendingCount').textContent = pending.length;
+  document.getElementById('pendingList').innerHTML = pending.length
+    ? pending.map((p,i)=>`
+        <div class="pending-card">
+          <div class="pending-info">
+            <div class="pending-name">${p.teamName}</div>
+            <div class="pending-players">${p.players||'No players listed'}</div>
+          </div>
+          <div class="pending-actions">
+            <button class="btn-approve" data-idx="${i}">Approve</button>
+            <button class="btn-danger" data-idx="${i}" style="padding:6px 10px;font-size:11px">✕</button>
+          </div>
+        </div>`).join('')
+    : '';
+
+  document.querySelectorAll('.btn-approve').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const idx = +btn.dataset.idx;
+      const p = (data.pending||[])[idx];
+      if (!p) return;
+      const teams = [...(data.teams||[]), p.teamName];
+      const pending = [...(data.pending||[])];
+      pending.splice(idx,1);
+      await window.save({teams, pending});
+    });
+  });
+  document.querySelectorAll('.btn-danger[data-idx]').forEach(btn=>{
+    btn.nextElementSibling || btn.addEventListener('click', async ()=>{
+      const pending=[...(data.pending||[])]; pending.splice(+btn.dataset.idx,1); await window.save({pending});
+    });
+  });
+  // Fix: re-attach danger button listeners properly
+  document.getElementById('pendingList').querySelectorAll('.pending-actions').forEach((actions,i)=>{
+    actions.querySelector('.btn-danger').addEventListener('click', async ()=>{
+      const pending=[...(data.pending||[])]; pending.splice(i,1); await window.save({pending});
+    });
+  });
+}
+
+// ── Add team ──
+document.getElementById('addTeamBtn').addEventListener('click', async ()=>{
+  const input=document.getElementById('newTeamInput'), name=input.value.trim();
+  if (!name) return;
+  await window.save({teams:[...(data.teams||[]),name]});
+  input.value='';
+});
+document.getElementById('newTeamInput').addEventListener('keydown', async e=>{
+  if (e.key!=='Enter') return;
+  const name=e.target.value.trim(); if (!name) return;
+  await window.save({teams:[...(data.teams||[]),name]}); e.target.value='';
+});
+
+window.rebuildBracket = ()=>buildBracket(shuffle(data.teams||[]),null);
+
+// ── Venue slots ──
+function renderVenueSlots() {
+  const slots = data.venueSlots || [];
+  const teams = data.teams || [];
+  const vLabel = (data.venue||'Court');
+  document.getElementById('venueEditorTitle').textContent = vLabel + ' Setup';
+  document.getElementById('newVenueInput').placeholder = `e.g. ${vLabel} 1, ${vLabel} A`;
+
+  document.getElementById('venueSlotsList').innerHTML = slots.length
+    ? slots.map((s,i) => `
+        <div class="venue-slot">
+          <div>
+            <div class="venue-slot-name">${s.name}</div>
+            ${s.team ? `<div class="venue-slot-team">${s.team}</div>` : ''}
+          </div>
+          <span class="venue-slot-remove" data-idx="${i}">Remove</span>
+        </div>`).join('')
+    : '<p style="font-size:13px;color:rgba(255,255,255,0.2);padding:4px 0">No venues added yet.</p>';
+
+  document.querySelectorAll('.venue-slot-remove').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const s = [...(data.venueSlots||[])];
+      s.splice(+btn.dataset.idx, 1);
+      await window.save({venueSlots: s});
+    });
+  });
+  // Rebuild assignments display too
+  buildAssignments(data.teams||[]);
+}
+
+document.getElementById('addVenueBtn').addEventListener('click', async () => {
+  const input = document.getElementById('newVenueInput');
+  const name = input.value.trim();
+  if (!name) return;
+  const slots = [...(data.venueSlots||[]), {name, team: null}];
+  await window.save({venueSlots: slots});
+  input.value = '';
+});
+document.getElementById('newVenueInput').addEventListener('keydown', async e => {
+  if (e.key !== 'Enter') return;
+  const name = e.target.value.trim(); if (!name) return;
+  const slots = [...(data.venueSlots||[]), {name, team: null}];
+  await window.save({venueSlots: slots});
+  e.target.value = '';
+});
+document.getElementById('randomizeVenueBtn').addEventListener('click', async () => {
+  const teams = shuffle([...(data.teams||[])]);
+  const slots = [...(data.venueSlots||[])];
+  slots.forEach((s,i) => { s.team = teams[i*2] ? (teams[i*2+1] ? `${teams[i*2]} vs ${teams[i*2+1]}` : teams[i*2]) : null; });
+  await window.save({venueSlots: slots});
+});
+
+// ── Edit tournament info ──
+function populateEditFields() {
+  document.getElementById('edit-name').value     = data.name     || '';
+  document.getElementById('edit-date').value     = data.date     || '';
+  document.getElementById('edit-location').value = data.location || '';
+  document.getElementById('edit-city').value     = data.city     || '';
+  document.getElementById('edit-fee').value      = data.fee      || '';
+  const formatEl = document.getElementById('edit-format');
+  [...formatEl.options].forEach(o => { if (o.value === data.format) o.selected = true; });
+}
+document.getElementById('saveInfoBtn').addEventListener('click', async () => {
+  await window.save({
+    name:     document.getElementById('edit-name').value.trim(),
+    date:     document.getElementById('edit-date').value.trim(),
+    location: document.getElementById('edit-location').value.trim(),
+    city:     document.getElementById('edit-city').value.trim(),
+    fee:      document.getElementById('edit-fee').value.trim(),
+    format:   document.getElementById('edit-format').value,
+  });
+  document.getElementById('saveInfoBtn').textContent = '✓ Saved!';
+  setTimeout(() => document.getElementById('saveInfoBtn').textContent = 'Save Changes', 2000);
+});
+
+
+// ── Auto-approve toggle ──
+document.getElementById('autoApproveToggle') && document.getElementById('autoApproveToggle').addEventListener('change', async function(){
+  await window.save({autoApprove:this.checked});
+});
+
+// ── Registration ──
+function showLandingModal() {
+  document.getElementById('landingTitle').textContent  = data.name||'Tournament';
+  document.getElementById('landingSubtitle').textContent = data.date ? `${data.date} • ${data.city||data.location||''}` : 'Welcome!';
+  document.getElementById('landingModal').classList.remove('hidden');
+}
+
+document.getElementById('landingRegister').addEventListener('click',()=>{
+  document.getElementById('landingModal').classList.add('hidden');
+  openRegisterModal();
+});
+document.getElementById('landingWatch').addEventListener('click',()=>{
+  document.getElementById('landingModal').classList.add('hidden');
+});
+document.getElementById('openRegisterBtn').addEventListener('click', openRegisterModal);
+
+function openRegisterModal() {
+  document.getElementById('registerTitle').textContent    = `Register for ${data.name||'Tournament'}`;
+  document.getElementById('registerSubtitle').textContent = data.teamSize ? `Team size: ${data.teamSize}` : 'Enter your team details.';
+  document.getElementById('registerModal').classList.remove('hidden');
+  document.getElementById('regTeamName').focus();
+}
+document.getElementById('cancelRegister').addEventListener('click',()=>document.getElementById('registerModal').classList.add('hidden'));
+
+document.getElementById('registerBtn').addEventListener('click', async ()=>{
+  const teamName = document.getElementById('regTeamName').value.trim();
+  const players  = document.getElementById('regPlayers').value.trim();
+  if (!teamName) { document.getElementById('regTeamName').style.borderColor='#f87171'; return; }
+
+  const entry = { teamName, players, submittedAt: new Date().toISOString() };
+
+  if (data.autoApprove) {
+    await window.save({teams:[...(data.teams||[]),teamName]});
+  } else {
+    await window.save({pending:[...(data.pending||[]),entry]});
+  }
+  document.getElementById('registerModal').classList.add('hidden');
+  document.getElementById('regTeamName').value='';
+  document.getElementById('regPlayers').value='';
+  alert(data.autoApprove ? `✅ "${teamName}" has been added to the bracket!` : `⏳ "${teamName}" is pending admin approval.`);
+});
+
+// ── Admin ──
+document.getElementById('adminAccessBtn').addEventListener('click',()=>{
+  document.getElementById('adminLogin').classList.remove('hidden');
+  document.getElementById('adminPwInput').focus();
+});
+document.getElementById('cancelLogin').addEventListener('click',()=>document.getElementById('adminLogin').classList.add('hidden'));
+document.getElementById('adminLoginBtn').addEventListener('click', doLogin);
+document.getElementById('adminPwInput').addEventListener('keydown',e=>{if(e.key==='Enter') doLogin();});
+
+function doLogin() {
+  if (document.getElementById('adminPwInput').value===(data.adminPw||'admin123')) {
+    isAdmin=true;
+    document.getElementById('adminLogin').classList.add('hidden');
+    document.getElementById('adminBar').classList.remove('hidden');
+    document.getElementById('adminToolsTab').style.display='block';
+    document.getElementById('checkinTab').style.display='block';
+    document.querySelectorAll('.admin-score-input').forEach(el=>el.style.display='inline-block');
+    document.querySelectorAll('.team-score').forEach(el=>el.style.display='none');
+    document.getElementById('autoApproveToggle').checked=!!data.autoApprove;
+    renderTeamsList(data.teams||[]);
+    renderCheckin(data.teams||[]);
+    renderPending();
+    renderVenueSlots();
+    populateEditFields();
+    setupQR();
+  } else {
+    document.getElementById('loginError').style.display='block';
+  }
+}
+
+document.getElementById('exitAdmin').addEventListener('click',()=>{
+  isAdmin=false;
+  document.getElementById('adminBar').classList.add('hidden');
+  document.getElementById('adminToolsTab').style.display='none';
+  document.getElementById('checkinTab').style.display='none';
+  document.querySelectorAll('.admin-score-input').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.team-score').forEach(el=>el.style.display='inline');
+  switchTab('info');
+});
+
+// ── Tabs ──
+window.switchTab = name=>{
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.panel===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('visible',p.id==='panel-'+name));
+};
+document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>window.switchTab(tab.dataset.panel)));
+</script>
+</body>
+</html>

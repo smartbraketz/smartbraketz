@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Braketz – Setup</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; }
+    .card { background: white; border-radius: 16px; padding: 2rem; width: 100%; max-width: 640px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .logo { font-size: 22px; font-weight: 700; color: #111; margin-bottom: 4px; }
+    .logo span { color: #2563eb; }
+    .subtitle { font-size: 14px; color: #666; margin-bottom: 1.5rem; }
+    .steps { display: flex; margin-bottom: 2rem; }
+    .step { flex: 1; text-align: center; font-size: 12px; font-weight: 600; color: #aaa; padding-bottom: 10px; border-bottom: 2px solid #e0e0e0; transition: all 0.2s; }
+    .step.active { color: #2563eb; border-bottom-color: #2563eb; }
+    .step.done { color: #16a34a; border-bottom-color: #16a34a; }
+    .section { display: none; }
+    .section.visible { display: block; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; margin-top: 1rem; }
+    input[type="password"], input[type="text"], input[type="number"], input[type="url"], select, textarea { width: 100%; padding: 10px 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; outline: none; transition: border 0.15s; background: white; font-family: inherit; }
+    input:focus, select:focus, textarea:focus { border-color: #2563eb; }
+    input.ai-filled { border-color: #bbf7d0; background: #f0fdf4; }
+    textarea { resize: vertical; min-height: 80px; }
+    .input-methods { display: flex; gap: 8px; margin-top: 1rem; margin-bottom: 1rem; }
+    .method-btn { flex: 1; padding: 10px; border: 1.5px solid #e0e0e0; border-radius: 8px; background: white; font-size: 13px; font-weight: 600; color: #666; cursor: pointer; transition: all 0.15s; }
+    .method-btn.active { border-color: #2563eb; background: #eff6ff; color: #2563eb; }
+    .upload-zone { border: 2px dashed #d0d0d0; border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; background: #fafafa; transition: background 0.15s, border-color 0.15s; }
+    .upload-zone:hover { background: #f0f4ff; border-color: #2563eb; }
+    .upload-zone p { font-size: 14px; color: #666; margin-top: 8px; }
+    .upload-zone p strong { color: #2563eb; }
+    #fileInput { display: none; }
+    #previewImg { width: 100%; max-height: 180px; object-fit: contain; border-radius: 8px; margin-top: 1rem; display: none; }
+    .found-images { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 0.75rem; }
+    .found-img-option { width: 80px; height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #e0e0e0; cursor: pointer; transition: border 0.15s; }
+    .found-img-option.selected { border-color: #2563eb; }
+    .btn { width: 100%; padding: 12px; background: #2563eb; color: white; font-size: 15px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: background 0.15s; margin-top: 1.25rem; }
+    .btn:hover { background: #1d4ed8; }
+    .btn:disabled { background: #a0b4d6; cursor: not-allowed; }
+    .btn-outline { width: 100%; padding: 12px; background: white; color: #2563eb; font-size: 15px; font-weight: 600; border: 1.5px solid #2563eb; border-radius: 8px; cursor: pointer; transition: background 0.15s; margin-top: 0.75rem; }
+    .btn-outline:hover { background: #f0f4ff; }
+    .error { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-top: 1rem; display: none; }
+    .status { font-size: 13px; color: #888; text-align: center; margin-top: 0.75rem; min-height: 20px; }
+    .ai-badge { display: inline-block; font-size: 10px; font-weight: 700; background: #dcfce7; color: #15803d; padding: 2px 7px; border-radius: 99px; margin-left: 6px; vertical-align: middle; }
+    .colors-row { display: flex; gap: 12px; margin-top: 0.5rem; flex-wrap: wrap; }
+    .color-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .color-swatch { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #eee; cursor: pointer; }
+    .color-hex { font-size: 11px; font-family: monospace; color: #666; }
+    .features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 0.75rem; }
+    .feature-card { border: 1.5px solid #e0e0e0; border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: all 0.15s; display: flex; align-items: flex-start; gap: 10px; }
+    .feature-card.on { border-color: #2563eb; background: #eff6ff; }
+    .feature-card input[type="checkbox"] { margin-top: 2px; accent-color: #2563eb; width: 16px; height: 16px; flex-shrink: 0; }
+    .feature-name { font-size: 13px; font-weight: 600; color: #111; }
+    .feature-desc { font-size: 11px; color: #888; margin-top: 2px; }
+    .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 1rem; }
+    .summary-field { background: #f8f8f8; border-radius: 8px; padding: 10px 12px; border: 1px solid #eee; }
+    .summary-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #888; margin-bottom: 4px; }
+    .summary-value { font-size: 14px; font-weight: 600; color: #111; }
+    .summary-value.missing { color: #aaa; font-style: italic; font-weight: 400; }
+    .theme-preview { border-radius: 10px; padding: 1.25rem; margin-top: 1rem; text-align: center; transition: all 0.3s; border: 1px solid #eee; }
+    .theme-preview h3 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .theme-preview p { font-size: 13px; opacity: 0.85; }
+    hr { border: none; border-top: 1px solid #eee; margin: 1.5rem 0; }
+    .success-box { background: #f0fdf4; border: 1px solid #86efac; border-radius: 12px; padding: 1.5rem; text-align: center; margin-top: 1rem; }
+    .success-box h3 { font-size: 18px; font-weight: 700; color: #16a34a; margin-bottom: 8px; }
+    .success-box p { font-size: 13px; color: #444; margin-bottom: 1rem; }
+    .link-box { background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 14px; font-size: 13px; font-family: monospace; word-break: break-all; margin-bottom: 1rem; }
+    .copy-btn { display: inline-block; padding: 8px 16px; background: #2563eb; color: white; font-size: 13px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Smart <span>Braketz</span></div>
+  <div class="subtitle">Set up your tournament page in minutes.</div>
+
+  <div class="steps">
+    <div class="step active" id="step1-tab">1. Import</div>
+    <div class="step" id="step2-tab">2. Confirm Info</div>
+    <div class="step" id="step3-tab">3. Features</div>
+    <div class="step" id="step4-tab">4. Preview</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="section visible" id="step1">
+    <label for="apiKey">Anthropic API Key</label>
+    <input type="password" id="apiKey" placeholder="Paste your Anthropic API key" />
+    <label>How do you want to import your tournament info?</label>
+    <div class="input-methods">
+      <button class="method-btn active" id="methodUrl">🔗 Paste a Link</button>
+      <button class="method-btn" id="methodUpload">📁 Upload Flyer</button>
+    </div>
+    <div id="urlSection">
+      <input type="url" id="tournamentUrl" placeholder="https://example.com/my-tournament" />
+      <button class="btn" id="fetchBtn">Fetch & Analyze →</button>
+    </div>
+    <div id="uploadSection" style="display:none">
+      <div class="upload-zone" id="uploadZone">
+        <svg width="32" height="32" fill="none" stroke="#aaa" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+        <p><strong>Click to upload</strong> or drag and drop a flyer image</p>
+        <input type="file" id="fileInput" accept="image/*" />
+      </div>
+      <img id="previewImg" alt="Flyer preview" />
+      <button class="btn" id="extractBtn" disabled>Analyze Flyer →</button>
+    </div>
+    <div id="imagePickerSection" style="display:none">
+      <label>Select the tournament flyer image (helps with color extraction)</label>
+      <div class="found-images" id="foundImages"></div>
+    </div>
+    <div class="error" id="errorMsg1"></div>
+    <div class="status" id="status1"></div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="section" id="step2">
+    <p style="font-size:13px;color:#666;margin-bottom:4px;">Fields marked <span class="ai-badge">AI</span> were filled automatically. Review and complete any missing info.</p>
+    <label>Tournament Name <span class="ai-badge" id="badge-name" style="display:none">AI</span></label>
+    <input type="text" id="f-name" placeholder="e.g. Summer Slam Open" />
+    <label>Sport Type <span class="ai-badge" id="badge-sport" style="display:none">AI</span></label>
+    <input type="text" id="f-sport" placeholder="e.g. Pickleball, Horseshoes, Tennis" />
+    <label>Venue Term <span class="ai-badge" id="badge-venue" style="display:none">AI</span></label>
+    <select id="f-venue">
+      <option value="">Select...</option>
+      <option value="Courts">Courts</option>
+      <option value="Pits">Pits</option>
+      <option value="Fields">Fields</option>
+      <option value="Tables">Tables</option>
+      <option value="Lanes">Lanes</option>
+      <option value="Rinks">Rinks</option>
+      <option value="Custom">Custom...</option>
+    </select>
+    <input type="text" id="f-venue-custom" placeholder="Enter custom venue term" style="display:none;margin-top:8px" />
+    <label>Date <span class="ai-badge" id="badge-date" style="display:none">AI</span></label>
+    <input type="text" id="f-date" placeholder="e.g. July 3-5, 2026" />
+    <label>Location / Venue Name <span class="ai-badge" id="badge-location" style="display:none">AI</span></label>
+    <input type="text" id="f-location" placeholder="e.g. Riverside Sports Complex" />
+    <label>City <span class="ai-badge" id="badge-city" style="display:none">AI</span></label>
+    <input type="text" id="f-city" placeholder="e.g. San Diego, CA" />
+    <label>Entry Fee (optional) <span class="ai-badge" id="badge-fee" style="display:none">AI</span></label>
+    <input type="text" id="f-fee" placeholder="e.g. $25 per player" />
+    <label>Max Teams / Players</label>
+    <input type="number" id="f-max" placeholder="e.g. 32" />
+    <label>Bracket Format</label>
+    <select id="f-format">
+      <option value="Single Elimination">Single Elimination</option>
+      <option value="Double Elimination">Double Elimination</option>
+      <option value="Round Robin">Round Robin</option>
+      <option value="Pool + Bracket">Pool Play + Bracket</option>
+    </select>
+    <label>Admin Password</label>
+    <input type="text" id="f-pw" placeholder="Password clubs use to manage their page" value="admin123" />
+    <label>Theme Colors <span class="ai-badge" id="badge-colors" style="display:none">AI</span></label>
+    <div class="colors-row" id="colorsRow"></div>
+    <label>Additional Notes (optional)</label>
+    <textarea id="f-notes" placeholder="Any other info players should know..."></textarea>
+    <button class="btn" id="toStep3Btn">Continue to Features →</button>
+    <button class="btn-outline" id="backTo1Btn">← Back</button>
+    <div class="error" id="errorMsg2"></div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="section" id="step3">
+    <p style="font-size:13px;color:#666;margin-bottom:4px;">Choose which features you want on your tournament page.</p>
+    <div class="features-grid" id="featuresGrid"></div>
+    <button class="btn" id="toStep4Btn">Preview My Page →</button>
+    <button class="btn-outline" id="backTo2Btn">← Back</button>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="section" id="step4">
+    <div class="theme-preview" id="themePreview">
+      <h3 id="previewName">Tournament Name</h3>
+      <p id="previewDetails">Date • Location</p>
+    </div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <hr />
+    <p style="font-size:13px;font-weight:600;color:#111;margin-bottom:8px;">Enabled Features</p>
+    <div id="enabledFeatures" style="font-size:13px;color:#444;line-height:1.8"></div>
+    <button class="btn" id="finishBtn">🎉 Create Tournament Page</button>
+    <div class="status" id="status4"></div>
+    <button class="btn-outline" id="backTo3Btn">← Back</button>
+
+    <!-- Success state -->
+    <div class="success-box" id="successBox" style="display:none">
+      <h3>🎉 Tournament Created!</h3>
+      <p>Share this link with your players:</p>
+      <div class="link-box" id="shareLink"></div>
+      <button class="copy-btn" id="copyBtn">Copy Link</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAzoP3hdTD7hLQotUViMN8F-bcFw24Tc1M",
+  authDomain: "smartbraketz-26e60.firebaseapp.com",
+  projectId: "smartbraketz-26e60",
+  storageBucket: "smartbraketz-26e60.firebasestorage.app",
+  messagingSenderId: "276583190387",
+  appId: "1:276583190387:web:c8f20d6859355525667f06"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── State ─────────────────────────────────────────────────
+let base64Image = null, imageMime = null, extracted = {}, selectedImageUrl = null;
+const features = [
+  { id: 'bracket',  name: 'Bracket',         desc: 'Full tournament bracket with advancement' },
+  { id: 'scoring',  name: 'Live Scoring',     desc: 'Real-time score updates' },
+  { id: 'spots',    name: 'Spot Assignments', desc: 'Assign teams to courts/pits/fields' },
+  { id: 'prizes',   name: 'Prize Calculator', desc: 'Auto-calculate prize pool payouts' },
+  { id: 'checkin',  name: 'Check-In',         desc: 'Mark players as arrived' },
+  { id: 'schedule', name: 'Schedule',         desc: 'Game schedule with times' },
+  { id: 'notify',   name: 'Notifications',    desc: "Alert players when they're up" },
+  { id: 'waitlist', name: 'Waitlist',         desc: 'Handle overflow registrations' },
+];
+let enabledFeatures = { bracket: true, scoring: true, spots: true, prizes: true };
+
+// ── Method toggle ─────────────────────────────────────────
+document.getElementById('methodUrl').addEventListener('click', () => {
+  document.getElementById('methodUrl').classList.add('active');
+  document.getElementById('methodUpload').classList.remove('active');
+  document.getElementById('urlSection').style.display = 'block';
+  document.getElementById('uploadSection').style.display = 'none';
+});
+document.getElementById('methodUpload').addEventListener('click', () => {
+  document.getElementById('methodUpload').classList.add('active');
+  document.getElementById('methodUrl').classList.remove('active');
+  document.getElementById('uploadSection').style.display = 'block';
+  document.getElementById('urlSection').style.display = 'none';
+});
+
+// ── Upload ────────────────────────────────────────────────
+const uploadZone = document.getElementById('uploadZone');
+const fileInput  = document.getElementById('fileInput');
+const previewImg = document.getElementById('previewImg');
+const extractBtn = document.getElementById('extractBtn');
+
+uploadZone.addEventListener('click', () => fileInput.click());
+uploadZone.addEventListener('dragover', e => e.preventDefault());
+uploadZone.addEventListener('drop', e => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', () => handleFile(fileInput.files[0]));
+
+function handleFile(file) {
+  if (!file) return;
+  imageMime = file.type;
+  const reader = new FileReader();
+  reader.onload = e => {
+    base64Image = e.target.result.split(',')[1];
+    previewImg.src = e.target.result;
+    previewImg.style.display = 'block';
+    extractBtn.disabled = false;
+    setStatus('Image ready — click Analyze to extract info.');
+  };
+  reader.readAsDataURL(file);
+}
+extractBtn.addEventListener('click', () => analyzeWithClaude(base64Image, imageMime, ''));
+
+// ── URL fetch ─────────────────────────────────────────────
+document.getElementById('fetchBtn').addEventListener('click', async () => {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const url    = document.getElementById('tournamentUrl').value.trim();
+  if (!apiKey) { showError('errorMsg1', 'Please paste your Anthropic API key.'); return; }
+  if (!url)    { showError('errorMsg1', 'Please paste a tournament URL.'); return; }
+
+  document.getElementById('fetchBtn').disabled = true;
+  setStatus('Fetching page...');
+  document.getElementById('errorMsg1').style.display = 'none';
+  document.getElementById('imagePickerSection').style.display = 'none';
+
+  try {
+    const res  = await fetch('http://localhost:3000/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+    const data = await res.json();
+    if (data.error) { showError('errorMsg1', data.error); document.getElementById('fetchBtn').disabled = false; return; }
+
+    setStatus('Page fetched! Analyzing with Claude...');
+
+    if (data.images && data.images.length) {
+      const container = document.getElementById('foundImages');
+      container.innerHTML = '';
+      data.images.slice(0, 5).forEach(imgUrl => {
+        const img = document.createElement('img');
+        img.src = imgUrl; img.className = 'found-img-option';
+        img.addEventListener('click', () => {
+          document.querySelectorAll('.found-img-option').forEach(i => i.classList.remove('selected'));
+          img.classList.add('selected'); selectedImageUrl = imgUrl;
+        });
+        container.appendChild(img);
+      });
+      document.getElementById('imagePickerSection').style.display = 'block';
+      selectedImageUrl = data.images[0];
+      container.firstChild && container.firstChild.classList.add('selected');
+    }
+
+    let imgBase64 = null, imgMime = 'image/jpeg';
+    if (selectedImageUrl) {
+      try {
+        const imgRes  = await fetch('http://localhost:3000/fetch-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: selectedImageUrl }) });
+        const imgData = await imgRes.json();
+        if (!imgData.error) { imgBase64 = imgData.base64; imgMime = imgData.mimeType; }
+      } catch(e) {}
+    }
+
+    const pageText = [data.title, data.ogDesc || data.meta, data.text].filter(Boolean).join('\n\n');
+    await analyzeWithClaude(imgBase64, imgMime, pageText);
+  } catch (err) {
+    showError('errorMsg1', 'Could not reach the server. Is server.js running? (node server.js)');
+  }
+  document.getElementById('fetchBtn').disabled = false;
+});
+
+// ── Claude analysis ───────────────────────────────────────
+async function analyzeWithClaude(imgBase64, imgMime, pageText) {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const prompt = `You are analyzing tournament information. Extract details and respond ONLY with valid JSON, no markdown, no backticks.
+
+${pageText ? `Page text:\n${pageText}\n\n` : ''}
+Rules:
+- date: format as a range if multi-day e.g. "July 3-5, 2026". Include the year if found. If no year is found, use 2026.
+- entry_fee: look for registration cost or price per player e.g. "$35 per player". null if not found.
+- location: venue name only, not the full address.
+- city: city and state e.g. "Spring Valley, CA".
+
+Return exactly:
+{
+  "tournament_name": "string or null",
+  "sport_type": "string or null",
+  "venue_term": "Courts or Pits or Fields or Tables or Lanes or Rinks",
+  "team_size": "Singles (1 player) or Doubles (2 players) or Team (3+ players) — detect from sport or flyer context",
+  "date": "string or null",
+  "entry_fee": "string or null",
+  "location": "string or null",
+  "city": "string or null",
+  "colors": ["#hex1", "#hex2", "#hex3"],
+  "theme": "string"
+}`;
+
+  const content = [];
+  if (imgBase64) content.push({ type: 'image', source: { type: 'base64', media_type: imgMime, data: imgBase64 } });
+  content.push({ type: 'text', text: prompt });
+
+  try {
+    const res  = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1024, messages: [{ role: 'user', content }] })
+    });
+    const data = await res.json();
+    if (data.error) { showError('errorMsg1', 'Claude error: ' + data.error.message); return; }
+    const raw  = data.content?.[0]?.text || '';
+    extracted  = JSON.parse(raw.replace(/```json|```/g, '').trim());
+    populateStep2();
+    goToStep(2);
+    setStatus('');
+  } catch (err) {
+    showError('errorMsg1', 'Something went wrong: ' + err.message);
+  }
+}
+
+// ── Populate Step 2 ───────────────────────────────────────
+function populateStep2() {
+  const set = (id, badgeId, val) => {
+    const el = document.getElementById(id);
+    if (val) { el.value = val; el.classList.add('ai-filled'); document.getElementById(badgeId).style.display = 'inline'; }
+  };
+  set('f-name',     'badge-name',     extracted.tournament_name);
+  set('f-sport',    'badge-sport',    extracted.sport_type);
+  set('f-date',     'badge-date',     extracted.date);
+  set('f-location', 'badge-location', extracted.location);
+  set('f-city',     'badge-city',     extracted.city);
+  set('f-fee',      'badge-fee',      extracted.entry_fee);
+
+  if (extracted.venue_term) {
+    const sel = document.getElementById('f-venue');
+    const opt = [...sel.options].find(o => o.value === extracted.venue_term);
+    if (opt) { sel.value = extracted.venue_term; sel.classList.add('ai-filled'); document.getElementById('badge-venue').style.display = 'inline'; }
+  }
+
+  const colorsRow = document.getElementById('colorsRow');
+  colorsRow.innerHTML = '';
+  if (extracted.colors && extracted.colors.length) {
+    document.getElementById('badge-colors').style.display = 'inline';
+    extracted.colors.forEach((c, i) => {
+      const item = document.createElement('div');
+      item.className = 'color-item';
+      item.innerHTML = `<input type="color" class="color-swatch" value="${c}" data-idx="${i}" /><span class="color-hex">${c}</span>`;
+      item.querySelector('input').addEventListener('input', function() {
+        extracted.colors[this.dataset.idx] = this.value;
+        item.querySelector('.color-hex').textContent = this.value;
+      });
+      colorsRow.appendChild(item);
+    });
+  }
+}
+
+document.getElementById('f-venue').addEventListener('change', function() {
+  document.getElementById('f-venue-custom').style.display = this.value === 'Custom' ? 'block' : 'none';
+});
+
+// ── Features ──────────────────────────────────────────────
+function renderFeatures() {
+  const grid = document.getElementById('featuresGrid');
+  grid.innerHTML = features.map(f => `
+    <div class="feature-card ${enabledFeatures[f.id] ? 'on' : ''}" data-id="${f.id}">
+      <input type="checkbox" ${enabledFeatures[f.id] ? 'checked' : ''} />
+      <div><div class="feature-name">${f.name}</div><div class="feature-desc">${f.desc}</div></div>
+    </div>
+  `).join('');
+  grid.querySelectorAll('.feature-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.id;
+      enabledFeatures[id] = !enabledFeatures[id];
+      card.classList.toggle('on', enabledFeatures[id]);
+      card.querySelector('input').checked = enabledFeatures[id];
+    });
+  });
+}
+
+// ── Summary ───────────────────────────────────────────────
+function renderSummary() {
+  const name     = document.getElementById('f-name').value;
+  const date     = document.getElementById('f-date').value;
+  const city     = document.getElementById('f-city').value;
+  const colors   = extracted.colors || [];
+  const preview  = document.getElementById('themePreview');
+  if (colors.length >= 2) { preview.style.background = `linear-gradient(135deg, ${colors[0]}22, ${colors[1]}33)`; preview.style.borderLeft = `5px solid ${colors[0]}`; }
+  document.getElementById('previewName').textContent = name || 'Your Tournament';
+  document.getElementById('previewName').style.color = colors[0] || '#111';
+  document.getElementById('previewDetails').textContent = [date, city].filter(Boolean).join(' • ') || 'Details TBD';
+
+  const fields = [
+    { label: 'Tournament', value: name },
+    { label: 'Sport',      value: document.getElementById('f-sport').value },
+    { label: 'Date',       value: date },
+    { label: 'Location',   value: document.getElementById('f-location').value },
+    { label: 'City',       value: city },
+    { label: 'Entry Fee',  value: document.getElementById('f-fee').value },
+    { label: 'Format',     value: document.getElementById('f-format').value },
+    { label: 'Admin PW',   value: document.getElementById('f-pw').value },
+  ];
+  document.getElementById('summaryGrid').innerHTML = fields.map(f => `
+    <div class="summary-field"><div class="summary-label">${f.label}</div><div class="summary-value ${!f.value ? 'missing' : ''}">${f.value || 'Not set'}</div></div>
+  `).join('');
+  const on = features.filter(f => enabledFeatures[f.id]).map(f => '✓ ' + f.name);
+  document.getElementById('enabledFeatures').innerHTML = on.join('<br>') || 'None selected';
+}
+
+// ── Finish — save to Firebase ─────────────────────────────
+document.getElementById('finishBtn').addEventListener('click', async () => {
+  const name     = document.getElementById('f-name').value;
+  if (!name) { showError('errorMsg2', 'Please enter a tournament name.'); return; }
+
+  const venueEl  = document.getElementById('f-venue');
+  const venue    = venueEl.value === 'Custom' ? document.getElementById('f-venue-custom').value : venueEl.value;
+  const tournamentData = {
+    name,
+    sport:    document.getElementById('f-sport').value,
+    venue,
+    date:     document.getElementById('f-date').value,
+    location: document.getElementById('f-location').value,
+    city:     document.getElementById('f-city').value,
+    fee:      document.getElementById('f-fee').value,
+    format:   document.getElementById('f-format').value,
+    teamSize: extracted.team_size || null,
+    adminPw:  document.getElementById('f-pw').value || 'admin123',
+    colors:   extracted.colors || ['#2563eb','#1e40af','#ffffff'],
+    features: enabledFeatures,
+    teams:    [],
+    createdAt: new Date().toISOString(),
+  };
+
+  // Generate a simple ID from name
+  const id = name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').slice(0, 30) + '-' + Date.now().toString(36);
+
+  document.getElementById('finishBtn').disabled = true;
+  document.getElementById('status4').textContent = 'Saving to Firebase...';
+
+  try {
+    await setDoc(doc(db, 'tournaments', id), tournamentData);
+    const link = `http://localhost:3000/tournament.html?id=${id}`;
+    document.getElementById('shareLink').textContent = link;
+    document.getElementById('successBox').style.display = 'block';
+    document.getElementById('finishBtn').style.display = 'none';
+    document.getElementById('status4').textContent = '';
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(link);
+      document.getElementById('copyBtn').textContent = 'Copied!';
+    });
+
+    window.open(link, '_blank');
+  } catch (err) {
+    document.getElementById('status4').textContent = 'Error: ' + err.message;
+    document.getElementById('finishBtn').disabled = false;
+  }
+});
+
+// ── Navigation ────────────────────────────────────────────
+function goToStep(n) {
+  [1,2,3,4].forEach(i => {
+    document.getElementById(`step${i}`).classList.toggle('visible', i === n);
+    const tab = document.getElementById(`step${i}-tab`);
+    tab.className = 'step' + (i === n ? ' active' : i < n ? ' done' : '');
+  });
+}
+document.getElementById('toStep3Btn').addEventListener('click', () => {
+  if (!document.getElementById('f-name').value) { showError('errorMsg2', 'Please enter a tournament name.'); return; }
+  renderFeatures(); goToStep(3);
+});
+document.getElementById('backTo1Btn').addEventListener('click', () => goToStep(1));
+document.getElementById('toStep4Btn').addEventListener('click', () => { renderSummary(); goToStep(4); });
+document.getElementById('backTo2Btn').addEventListener('click', () => goToStep(2));
+document.getElementById('backTo3Btn').addEventListener('click', () => goToStep(3));
+
+// ── Helpers ───────────────────────────────────────────────
+function showError(id, msg) { const el = document.getElementById(id); el.textContent = msg; el.style.display = 'block'; }
+function setStatus(msg) { document.getElementById('status1').textContent = msg; }
+</script>
+</body>
+</html>
