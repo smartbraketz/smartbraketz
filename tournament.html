@@ -8,13 +8,17 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
-      --c1: #2563eb; --c2: #1e40af; --c3: #ffffff;
+      --c1: #2563eb; --c2: #1e40af; --c3: #ffffff; --c4: #e63946; --c5: #ffd700;
       --c1-05: color-mix(in srgb, var(--c1) 5%, transparent);
       --c1-10: color-mix(in srgb, var(--c1) 10%, transparent);
       --c1-20: color-mix(in srgb, var(--c1) 20%, transparent);
       --c1-30: color-mix(in srgb, var(--c1) 30%, transparent);
       --c1-50: color-mix(in srgb, var(--c1) 50%, transparent);
       --c1-light: color-mix(in srgb, var(--c1) 75%, white);
+      --c4-20: color-mix(in srgb, var(--c4) 20%, transparent);
+      --c4-light: color-mix(in srgb, var(--c4) 75%, white);
+      --c5-20: color-mix(in srgb, var(--c5) 20%, transparent);
+      --c5-light: color-mix(in srgb, var(--c5) 75%, white);
       --bg: #080808;
       --card-bg: rgba(255,255,255,0.04);
       --border: rgba(255,255,255,0.08);
@@ -31,20 +35,26 @@
 
     /* ── Full-page theme background ── */
     .theme-bg {
-      position: fixed; inset: 0; z-index: -1;
-      background:
-        radial-gradient(ellipse 120% 60% at 50% -5%, var(--c1-30), transparent 55%),
-        radial-gradient(ellipse 80% 50% at 100% 100%, color-mix(in srgb, var(--c2) 20%, transparent), transparent 55%),
-        radial-gradient(ellipse 60% 40% at 0% 80%, var(--c1-10), transparent 50%);
+      position: fixed; inset: 0; z-index: -3;
       background-color: var(--bg);
     }
-    .theme-grid {
+    .theme-pattern {
+      position: fixed; inset: 0; z-index: -2;
+      pointer-events: none; opacity: 0.07;
+    }
+    .theme-symbols {
       position: fixed; inset: 0; z-index: -1;
-      background-image:
-        linear-gradient(var(--c1-05) 1px, transparent 1px),
-        linear-gradient(90deg, var(--c1-05) 1px, transparent 1px);
-      background-size: 48px 48px;
-      mask-image: radial-gradient(ellipse 100% 100% at 50% 0%, black 20%, transparent 80%);
+      pointer-events: none; overflow: hidden;
+    }
+    .theme-symbol {
+      position: absolute; font-size: 80px; opacity: 0.06;
+      animation: floatSymbol 20s ease-in-out infinite;
+      user-select: none;
+    }
+    @keyframes floatSymbol {
+      0%,100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(5deg); }
+      66% { transform: translateY(10px) rotate(-3deg); }
     }
 
     /* ── Hero ── */
@@ -52,7 +62,7 @@
     .hero-eyebrow {
       display: inline-flex; gap: 6px; align-items: center;
       font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--c1-light); background: var(--c1-20); border: 1px solid var(--c1-30);
+      color: var(--c5-light); background: var(--c5-20); border: 1px solid color-mix(in srgb, var(--c5) 30%, transparent);
       border-radius: 99px; padding: 5px 14px; margin-bottom: 1rem;
     }
     .hero h1 {
@@ -104,6 +114,10 @@
       text-transform: uppercase; letter-spacing: 0.1em;
       color: var(--c1-light); margin-bottom: 1.25rem;
     }
+    .card:nth-child(3n) .card-title { color: var(--c4-light); }
+    .card:nth-child(3n) { border-color: var(--c4-20) !important; }
+    .card:nth-child(5n) .card-title { color: var(--c5-light); }
+    .card:nth-child(5n) { border-color: var(--c5-20) !important; }
 
     /* ── Info ── */
     .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
@@ -116,9 +130,13 @@
     .round-col { display: flex; flex-direction: column; position: relative; }
     .round-header {
       font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
-      color: var(--c1-light); opacity: 0.7; text-align: center;
+      color: var(--c1-light); opacity: 0.8; text-align: center;
       padding: 0 12px 12px;
     }
+    .round-col:nth-child(even) .round-header { color: var(--c4-light); }
+    .round-col:nth-child(even) .match { border-color: color-mix(in srgb, var(--c4) 20%, transparent); }
+    .round-col:nth-child(even) .match-team.winner { background: color-mix(in srgb, var(--c4) 12%, transparent); }
+    .round-col:nth-child(even) .match-team.winner .team-name { color: var(--c4-light); }
     .match-wrapper {
       display: flex; align-items: center; position: relative;
       padding: 6px 12px;
@@ -188,6 +206,8 @@
     }
     .schedule-item:last-child { border-bottom: none; }
     .schedule-time { font-size: 12px; font-weight: 700; color: var(--c1-light); min-width: 65px; }
+    .schedule-item:nth-child(even) .schedule-time { color: var(--c4-light); }
+    .schedule-item:nth-child(even) .schedule-venue { background: var(--c4-20); border-color: color-mix(in srgb, var(--c4) 30%, transparent); color: var(--c4-light); }
     .schedule-match { font-size: 13px; color: rgba(255,255,255,0.75); flex: 1; }
     .schedule-venue {
       font-size: 11px; font-weight: 600; color: var(--c1-light);
@@ -356,8 +376,9 @@
   </style>
 </head>
 <body>
-<div class="theme-bg"></div>
-<div class="theme-grid"></div>
+<div class="theme-bg" id="themeBg"></div>
+<div class="theme-pattern" id="themePattern"></div>
+<div class="theme-symbols" id="themeSymbols"></div>
 
 <!-- Admin login -->
 <div class="modal-overlay hidden" id="adminLogin">
@@ -614,9 +635,72 @@ if (!tournamentId) {
 
 // ── Theme ──
 function applyTheme() {
-  const c = data.colors || ['#2563eb','#1e40af','#fff'];
-  document.documentElement.style.setProperty('--c1', c[0]);
-  document.documentElement.style.setProperty('--c2', c[1]||c[0]);
+  const c = data.colors && data.colors.length >= 2 ? data.colors : ['#2563eb','#1e40af','#ffffff','#e63946','#ffd700'];
+  const c1 = c[0], c2 = c[1]||c[0], c3 = c[2]||'#ffffff', c4 = c[3]||c[0], c5 = c[4]||c[1];
+  const root = document.documentElement;
+  root.style.setProperty('--c1', c1);
+  root.style.setProperty('--c2', c2);
+  root.style.setProperty('--c3', c3);
+  root.style.setProperty('--c4', c4);
+  root.style.setProperty('--c5', c5);
+
+  // Dynamic gradient background using all colors
+  document.getElementById('themeBg').style.background = `
+    radial-gradient(ellipse 130% 70% at 50% -10%, ${c1}55, transparent 50%),
+    radial-gradient(ellipse 80% 60% at 100% 20%, ${c4}30, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 0% 60%, ${c2}25, transparent 55%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, ${c5}20, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 20% 100%, ${c3}15, transparent 50%),
+    #080808`;
+
+  // Pattern
+  const pattern = data.pattern || 'grid';
+  const patternEl = document.getElementById('themePattern');
+  if (pattern === 'grid') {
+    patternEl.style.backgroundImage = `linear-gradient(${c1}40 1px, transparent 1px), linear-gradient(90deg, ${c1}40 1px, transparent 1px)`;
+    patternEl.style.backgroundSize = '48px 48px';
+  } else if (pattern === 'dots') {
+    patternEl.style.backgroundImage = `radial-gradient(circle, ${c1}60 1px, transparent 1px)`;
+    patternEl.style.backgroundSize = '32px 32px';
+  } else if (pattern === 'stars') {
+    patternEl.style.backgroundImage = `radial-gradient(circle, ${c3}50 1px, transparent 1px), radial-gradient(circle, ${c1}30 2px, transparent 2px)`;
+    patternEl.style.backgroundSize = '24px 24px, 48px 48px';
+  } else if (pattern === 'confetti') {
+    patternEl.style.backgroundImage = `repeating-linear-gradient(45deg, ${c1}20 0, ${c1}20 2px, transparent 0, transparent 50%), repeating-linear-gradient(-45deg, ${c4}15 0, ${c4}15 2px, transparent 0, transparent 50%)`;
+    patternEl.style.backgroundSize = '20px 20px';
+  } else if (pattern === 'waves') {
+    patternEl.style.backgroundImage = `repeating-linear-gradient(0deg, transparent, transparent 30px, ${c1}20 30px, ${c1}20 31px)`;
+  }
+  patternEl.style.maskImage = 'radial-gradient(ellipse 100% 100% at 50% 0%, black 10%, transparent 85%)';
+
+  // Floating symbols
+  const symbols = data.symbols && data.symbols.length ? data.symbols : [];
+  const symbolsEl = document.getElementById('themeSymbols');
+  symbolsEl.innerHTML = '';
+  if (symbols.length) {
+    const positions = [
+      {top:'5%',left:'3%',delay:'0s',size:'100px'},
+      {top:'8%',right:'5%',delay:'3s',size:'120px'},
+      {top:'20%',left:'88%',delay:'6s',size:'80px'},
+      {top:'40%',left:'2%',delay:'9s',size:'90px'},
+      {top:'60%',right:'3%',delay:'2s',size:'110px'},
+      {top:'75%',left:'5%',delay:'5s',size:'75px'},
+      {top:'85%',right:'8%',delay:'8s',size:'95px'},
+      {top:'30%',left:'45%',delay:'4s',size:'70px'},
+    ];
+    positions.forEach((pos, i) => {
+      const sym = symbols[i % symbols.length];
+      const el = document.createElement('div');
+      el.className = 'theme-symbol';
+      el.textContent = sym;
+      el.style.cssText = `top:${pos.top};${pos.left?'left:'+pos.left:''};${pos.right?'right:'+pos.right:''};font-size:${pos.size};animation-delay:${pos.delay};`;
+      symbolsEl.appendChild(el);
+    });
+  }
+
+  // Color the card borders with variety
+  document.querySelectorAll('.card:nth-child(odd)').forEach(c => c.style.borderColor = `${c1}30`);
+  document.querySelectorAll('.card:nth-child(even)').forEach(c => c.style.borderColor = `${c4}25`);
 }
 
 // ── Populate ──
@@ -944,16 +1028,21 @@ function renderPending(){
         <button class="btn-danger" data-idx="${i}">Reject</button>
       </div>
     </div>`).join('');
-  document.querySelectorAll('.btn-approve').forEach(btn=>{
-    btn.addEventListener('click',async()=>{
-      const idx=+btn.dataset.idx,p=(data.pending||[])[idx];if(!p)return;
-      const teams=[...(data.teams||[]),{name:p.teamName,players:p.players?p.players.split(',').map(s=>s.trim()):[],captain:p.captain||''}];
-      const pend=[...(data.pending||[])];pend.splice(idx,1);
-      await window.save({teams,pending:pend});
-    });
-  });
-  document.querySelectorAll('.pending-actions .btn-danger').forEach(btn=>{
-    btn.addEventListener('click',async()=>{const pend=[...(data.pending||[])];pend.splice(+btn.dataset.idx,1);await window.save({pending:pend});});
+  document.getElementById('pendingList').addEventListener('click', async(e)=>{
+    const btn = e.target.closest('[data-idx]');
+    if (!btn) return;
+    const idx = +btn.dataset.idx;
+    if (btn.classList.contains('btn-approve')) {
+      const p = (data.pending||[])[idx]; if(!p) return;
+      const players = p.players ? p.players.split(',').map(s=>s.trim()) : [];
+      const newTeam = {name:p.teamName, players, captain:p.captain||''};
+      const teams = [...(data.teams||[]), newTeam];
+      const pend  = [...(data.pending||[])]; pend.splice(idx,1);
+      await window.save({teams, pending:pend});
+    } else if (btn.classList.contains('btn-danger')) {
+      const pend=[...(data.pending||[])]; pend.splice(idx,1);
+      await window.save({pending:pend});
+    }
   });
 }
 

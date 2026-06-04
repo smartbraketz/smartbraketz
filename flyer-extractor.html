@@ -333,8 +333,10 @@ Return exactly:
   "entry_fee": "string or null",
   "location": "string or null",
   "city": "string or null",
-  "colors": ["#hex1", "#hex2", "#hex3"],
-  "theme": "string"
+  "colors": ["#hex1", "#hex2", "#hex3", "#hex4", "#hex5"],
+  "theme": "string (e.g. patriotic, tropical, neon, rustic, minimal)",
+  "symbols": ["2-4 emoji that represent the visual theme of the flyer, e.g. 🎆🇺🇸⭐🏓 for a 4th of July pickleball tournament"],
+  "pattern": "dots or grid or lines or waves or stars or confetti or none"
 }`;
 
   const content = [];
@@ -464,6 +466,8 @@ document.getElementById('finishBtn').addEventListener('click', async () => {
     fee:      document.getElementById('f-fee').value,
     format:   document.getElementById('f-format').value,
     teamSize: extracted.team_size || null,
+    symbols:  extracted.symbols  || [],
+    pattern:  extracted.pattern  || 'none',
     adminPw:  document.getElementById('f-pw').value || 'admin123',
     colors:   extracted.colors || ['#2563eb','#1e40af','#ffffff'],
     features: enabledFeatures,
