@@ -58,7 +58,17 @@
     }
 
     /* ── Hero ── */
-    .hero { padding: 3.5rem 1.5rem 2.5rem; text-align: center; position: relative; }
+    .hero { padding: 2rem 1.5rem 2rem; text-align: center; position: relative; }
+    .hero-flyer-wrap {
+      margin: 0 auto 1.5rem;
+      max-width: 480px; width: 100%;
+    }
+    .hero-flyer-wrap img {
+      width: 100%; height: auto;
+      border-radius: 16px;
+      box-shadow: 0 8px 48px rgba(0,0,0,0.5), 0 0 80px var(--c1-30);
+      border: 1px solid var(--c1-20);
+    }
     .hero-eyebrow {
       display: inline-flex; gap: 6px; align-items: center;
       font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
@@ -90,18 +100,16 @@
     }
     .nav-inner { max-width: 960px; margin: 0 auto; }
     .nav-logo {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 1rem 8px;
+      display: flex; align-items: center; justify-content: center;
+      padding: 14px 1rem 10px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .nav-logo img {
-      height: 44px; width: auto; max-width: 120px;
-      object-fit: contain; border-radius: 8px;
-    }
+    .nav-logo img { display: none !important; }
     .nav-logo span {
-      font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800;
+      font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800;
       color: #fff; letter-spacing: -0.02em; line-height: 1.2;
       text-shadow: 0 0 30px var(--c1-50);
+      text-align: center;
     }
     .tabs { display: flex; padding: 0 0.5rem; overflow-x: auto; }
     .tab {
@@ -488,8 +496,11 @@
 
 <!-- Hero -->
 <div class="hero">
+  <div class="hero-flyer-wrap" id="heroFlyerWrap" style="display:none">
+    <img id="heroFlyerImg" src="" alt="Tournament flyer" />
+  </div>
   <div class="hero-eyebrow" id="heroEyebrow">Live Tournament</div>
-  <h1 id="headerTitle">Loading...</h1>
+  <h1 id="headerTitle" style="display:none">Loading...</h1>
   <div class="hero-meta" id="headerMeta"></div>
   <div class="hero-badges">
     <span class="badge accent" id="headerSport"></span>
@@ -739,18 +750,22 @@ function populatePage() {
   if (data.fee) { const el=document.getElementById('headerFee'); el.textContent=data.fee.startsWith('$')?data.fee:'$'+data.fee; el.style.display='inline'; }
   if (data.teamSize) { const el=document.getElementById('headerTeamSize'); el.textContent=data.teamSize; el.style.display='inline'; }
 
-  // Logo in nav
-  const navLogo = document.getElementById('navLogo');
-  const navLogoImg = document.getElementById('navLogoImg');
-  const navLogoName = document.getElementById('navLogoName');
-  navLogoName.textContent = data.name || '';
+  // Nav: name only
+  document.getElementById('navLogoName').textContent = data.name || '';
+  document.getElementById('navLogo').style.display = 'flex';
+
+  // Hero: flyer image or fallback to text title
+  const heroFlyerWrap = document.getElementById('heroFlyerWrap');
+  const heroFlyerImg  = document.getElementById('heroFlyerImg');
+  const headerTitle   = document.getElementById('headerTitle');
   if (data.logoUrl) {
-    navLogoImg.src = data.logoUrl;
-    navLogoImg.style.display = 'block';
-    navLogo.style.display = 'flex';
+    heroFlyerImg.src = data.logoUrl;
+    heroFlyerWrap.style.display = 'block';
+    headerTitle.style.display = 'none';
   } else {
-    navLogoImg.style.display = 'none';
-    navLogo.style.display = 'flex'; // still show name
+    heroFlyerWrap.style.display = 'none';
+    headerTitle.style.display = 'block';
+    headerTitle.textContent = data.name || 'Tournament';
   }
 
   document.getElementById('infoGrid').innerHTML = [
