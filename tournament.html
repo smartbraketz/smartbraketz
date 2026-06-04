@@ -88,9 +88,24 @@
       border-bottom: 2px solid var(--c1-30);
       box-shadow: 0 4px 24px rgba(0,0,0,0.4);
     }
-    .tabs { display: flex; max-width: 960px; margin: 0 auto; padding: 0 0.5rem; overflow-x: auto; }
+    .nav-inner { max-width: 960px; margin: 0 auto; }
+    .nav-logo {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 1rem 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-logo img {
+      height: 44px; width: auto; max-width: 120px;
+      object-fit: contain; border-radius: 8px;
+    }
+    .nav-logo span {
+      font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800;
+      color: #fff; letter-spacing: -0.02em; line-height: 1.2;
+      text-shadow: 0 0 30px var(--c1-50);
+    }
+    .tabs { display: flex; padding: 0 0.5rem; overflow-x: auto; }
     .tab {
-      flex: 1; min-width: 80px; padding: 18px 12px;
+      flex: 1; min-width: 80px; padding: 16px 12px;
       font-size: 14px; font-weight: 700; font-family: 'Syne', sans-serif;
       color: var(--text-dimmer); cursor: pointer; text-align: center;
       border-bottom: 3px solid transparent; white-space: nowrap; transition: all 0.2s;
@@ -455,13 +470,19 @@
 
 <!-- Nav -->
 <div class="nav-wrap">
-  <div class="tabs">
-    <div class="tab active" data-panel="info">Info</div>
-    <div class="tab" data-panel="bracket">Bracket</div>
-    <div class="tab" data-panel="schedule">Schedule</div>
-    <div class="tab" data-panel="assignments">Assignments</div>
-    <div class="tab" data-panel="checkin" id="checkinTab" style="display:none">Check-In</div>
-    <div class="tab" data-panel="admin-tools" id="adminToolsTab" style="display:none">⚙ Admin</div>
+  <div class="nav-inner">
+    <div class="nav-logo" id="navLogo" style="display:none">
+      <img id="navLogoImg" src="" alt="Tournament logo" />
+      <span id="navLogoName"></span>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-panel="info">Info</div>
+      <div class="tab" data-panel="bracket">Bracket</div>
+      <div class="tab" data-panel="schedule">Schedule</div>
+      <div class="tab" data-panel="assignments">Assignments</div>
+      <div class="tab" data-panel="checkin" id="checkinTab" style="display:none">Check-In</div>
+      <div class="tab" data-panel="admin-tools" id="adminToolsTab" style="display:none">⚙ Admin</div>
+    </div>
   </div>
 </div>
 
@@ -475,18 +496,6 @@
     <span class="badge" id="headerVenue"></span>
     <span class="badge" id="headerFee" style="display:none"></span>
     <span class="badge" id="headerTeamSize" style="display:none"></span>
-  </div>
-</div>
-
-<!-- Nav -->
-<div class="nav-wrap">
-  <div class="tabs">
-    <div class="tab active" data-panel="info">Info</div>
-    <div class="tab" data-panel="bracket">Bracket</div>
-    <div class="tab" data-panel="schedule">Schedule</div>
-    <div class="tab" data-panel="assignments">Assignments</div>
-    <div class="tab" data-panel="checkin" id="checkinTab" style="display:none">Check-In</div>
-    <div class="tab" data-panel="admin-tools" id="adminToolsTab" style="display:none">⚙ Admin</div>
   </div>
 </div>
 
@@ -729,6 +738,20 @@ function populatePage() {
   document.getElementById('heroEyebrow').textContent  = data.sport ? data.sport + ' Tournament' : 'Live Tournament';
   if (data.fee) { const el=document.getElementById('headerFee'); el.textContent=data.fee.startsWith('$')?data.fee:'$'+data.fee; el.style.display='inline'; }
   if (data.teamSize) { const el=document.getElementById('headerTeamSize'); el.textContent=data.teamSize; el.style.display='inline'; }
+
+  // Logo in nav
+  const navLogo = document.getElementById('navLogo');
+  const navLogoImg = document.getElementById('navLogoImg');
+  const navLogoName = document.getElementById('navLogoName');
+  navLogoName.textContent = data.name || '';
+  if (data.logoUrl) {
+    navLogoImg.src = data.logoUrl;
+    navLogoImg.style.display = 'block';
+    navLogo.style.display = 'flex';
+  } else {
+    navLogoImg.style.display = 'none';
+    navLogo.style.display = 'flex'; // still show name
+  }
 
   document.getElementById('infoGrid').innerHTML = [
     {label:'Date',value:data.date},{label:'Location',value:data.location},

@@ -466,6 +466,7 @@ document.getElementById('finishBtn').addEventListener('click', async () => {
     fee:      document.getElementById('f-fee').value,
     format:   document.getElementById('f-format').value,
     teamSize: extracted.team_size || null,
+    logoUrl:  selectedImageUrl || null,
     symbols:  extracted.symbols  || [],
     pattern:  extracted.pattern  || 'none',
     adminPw:  document.getElementById('f-pw').value || 'admin123',
