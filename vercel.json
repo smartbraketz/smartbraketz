@@ -1,6 +1,14 @@
 {
-  "rewrites": [
-    { "source": "/api/scrape", "destination": "/api/scrape" },
-    { "source": "/api/fetch-image", "destination": "/api/fetch-image" }
+  "version": 2,
+  "builds": [
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "api/*.js", "use": "@vercel/node" }
+  ],
+  "routes": [
+    { "src": "/api/scrape", "dest": "/api/scrape.js" },
+    { "src": "/api/fetch-image", "dest": "/api/fetch-image.js" },
+    { "src": "/flyer-extractor.html", "dest": "/flyer-extractor.html" },
+    { "src": "/tournament.html", "dest": "/tournament.html" },
+    { "src": "/", "dest": "/flyer-extractor.html" }
   ]
 }
