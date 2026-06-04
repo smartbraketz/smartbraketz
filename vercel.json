@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/scrape", "destination": "/api/scrape" },
+    { "source": "/api/fetch-image", "destination": "/api/fetch-image" }
+  ]
+}

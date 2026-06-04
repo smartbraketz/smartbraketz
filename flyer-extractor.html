@@ -271,7 +271,7 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
   document.getElementById('imagePickerSection').style.display = 'none';
 
   try {
-    const res  = await fetch('http://localhost:3000/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+    const res  = await fetch('/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
     const data = await res.json();
     if (data.error) { showError('errorMsg1', data.error); document.getElementById('fetchBtn').disabled = false; return; }
 
@@ -297,7 +297,7 @@ document.getElementById('fetchBtn').addEventListener('click', async () => {
     let imgBase64 = null, imgMime = 'image/jpeg';
     if (selectedImageUrl) {
       try {
-        const imgRes  = await fetch('http://localhost:3000/fetch-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: selectedImageUrl }) });
+        const imgRes  = await fetch('/api/fetch-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: selectedImageUrl }) });
         const imgData = await imgRes.json();
         if (!imgData.error) { imgBase64 = imgData.base64; imgMime = imgData.mimeType; }
       } catch(e) {}
