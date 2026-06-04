@@ -394,6 +394,15 @@
     .add-row input { flex: 1; padding: 10px 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--c1-20); border-radius: 10px; font-size: 14px; color: #fff; outline: none; font-family: 'DM Sans', sans-serif; }
     .add-row input:focus { border-color: var(--c1); }
 
+    .bracket-tab {
+      padding: 8px 18px; font-size: 12px; font-weight: 700;
+      background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all 0.2s; letter-spacing: 0.02em;
+    }
+    .bracket-tab:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); }
+    .bracket-tab.active { background: var(--c1-20); color: var(--c1-light); border-color: var(--c1-30); }
+    .bracket-tab-content { overflow-x: auto; }
     .empty-state { text-align: center; padding: 2rem; color: var(--text-dimmer); font-size: 13px; }
     .loading { text-align: center; padding: 4rem; color: var(--text-dimmer); font-size: 14px; }
     .divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 1rem 0; }
@@ -776,7 +785,7 @@ function populatePage() {
   ].map(f=>`<div><div class="info-label">${f.label}</div><div class="info-value">${f.value||'—'}</div></div>`).join('');
 
   const teams = getTeamNames();
-  buildBracket(teams, data.matches);
+  buildBracket(teams, data.bracketState||null);
   buildSchedule(teams);
   buildAssignments(teams);
   renderCheckin(teams);
@@ -807,112 +816,254 @@ function setupQR() {
 // ── Shuffle ──
 function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 
-// ── Bracket ──
-function buildBracket(teams, savedMatches) {
+// ── Double Elimination Bracket ──
+// Structure: WB = winners bracket rounds, LB = losers bracket rounds, GF = grand final, GF2 = bracket reset
+
+function buildBracket(teams, savedState) {
   const container = document.getElementById('bracketContainer');
   container.innerHTML = '';
   if (isAdmin) container.classList.add('admin-bracket');
   else container.classList.remove('admin-bracket');
 
-  if (teams.length < 2) { container.innerHTML='<p class="empty-state">Add at least 2 teams to generate a bracket.</p>'; return; }
+  if (teams.length < 2) {
+    container.innerHTML = '<p class="empty-state">Add at least 2 teams to generate a bracket.</p>';
+    return;
+  }
 
+  // Pad to power of 2
   let padded = [...teams];
-  while ((padded.length & (padded.length-1)) !== 0) padded.push('BYE');
+  while ((padded.length & (padded.length - 1)) !== 0) padded.push('BYE');
+  const n = padded.length;
 
-  const rounds = [];
-  let current = [...padded];
-  while (current.length > 1) {
-    const matches = [];
-    for (let i=0;i<current.length;i+=2) matches.push({t1:current[i],t2:current[i+1]||'BYE',s1:null,s2:null,winner:null});
-    rounds.push(matches);
-    current = matches.map(()=>'?');
+  // Init WB
+  let WB = [];
+  let wbRound = [];
+  for (let i = 0; i < n; i += 2) wbRound.push(makeMatch(padded[i], padded[i+1]||'BYE'));
+  WB.push(wbRound);
+  while (WB[WB.length-1].length > 1) {
+    const prev = WB[WB.length-1];
+    const next = [];
+    for (let i = 0; i < prev.length; i += 2) next.push(makeMatch('?','?'));
+    WB.push(next);
   }
 
-  const nameMap={2:['Final'],4:['Semifinal','Final'],8:['Quarterfinal','Semifinal','Final'],16:['Round of 16','Quarterfinal','Semifinal','Final']};
-  const names = nameMap[padded.length]||rounds.map((_,i)=>`Round ${i+1}`);
+  // Init LB (losers bracket has 2*(log2(n)-1) rounds)
+  let LB = [];
+  const wbRounds = WB.length;
+  // LB round count: for n teams, LB has 2*(wbRounds-1) rounds
+  let lbSize = n / 2;
+  let phase = 'drop'; // alternates drop/merge
+  while (lbSize >= 1) {
+    LB.push(Array.from({length: lbSize}, () => makeMatch('?','?')));
+    if (phase === 'drop') { phase = 'merge'; }
+    else { lbSize = lbSize / 2; phase = 'drop'; }
+    if (lbSize < 1) break;
+  }
 
-  if (savedMatches) {
-    savedMatches.forEach((round,ri)=>{
-      round&&round.forEach((m,mi)=>{
-        if(rounds[ri]&&rounds[ri][mi]){
-          Object.assign(rounds[ri][mi],m);
-          if(m.winner===0&&ri+1<rounds.length) rounds[ri+1][Math.floor(mi/2)][mi%2===0?'t1':'t2']=m.t1;
-          if(m.winner===1&&ri+1<rounds.length) rounds[ri+1][Math.floor(mi/2)][mi%2===0?'t1':'t2']=m.t2;
-        }
-      });
+  // Grand Final + possible reset
+  const GF  = makeMatch('?','?');
+  const GF2 = makeMatch('?','?'); // bracket reset if LB winner wins GF
+
+  // Load saved state
+  if (savedState && savedState.WB) {
+    savedState.WB.forEach((r,ri) => r && r.forEach((m,mi) => { if(WB[ri]&&WB[ri][mi]) Object.assign(WB[ri][mi],m); }));
+    if (savedState.LB) savedState.LB.forEach((r,ri) => r && r.forEach((m,mi) => { if(LB[ri]&&LB[ri][mi]) Object.assign(LB[ri][mi],m); }));
+    if (savedState.GF)  Object.assign(GF,  savedState.GF);
+    if (savedState.GF2) Object.assign(GF2, savedState.GF2);
+    propagateAll(WB, LB, GF, GF2, n);
+  } else {
+    propagateAll(WB, LB, GF, GF2, n);
+  }
+
+  // Build tabs
+  container.innerHTML = `
+    <div style="display:flex;gap:10px;margin-bottom:1rem;flex-wrap:wrap">
+      <button class="bracket-tab active" data-tab="wb" onclick="showBracketTab('wb',this)">🏆 Winners</button>
+      <button class="bracket-tab" data-tab="lb" onclick="showBracketTab('lb',this)">🔁 Losers</button>
+      <button class="bracket-tab" data-tab="gf" onclick="showBracketTab('gf',this)">⚡ Grand Final</button>
+    </div>
+    <div id="bt-wb" class="bracket-tab-content"><div class="bracket" id="wb-bracket"></div></div>
+    <div id="bt-lb" class="bracket-tab-content" style="display:none"><div class="bracket" id="lb-bracket"></div></div>
+    <div id="bt-gf" class="bracket-tab-content" style="display:none"><div class="bracket" id="gf-bracket"></div></div>`;
+
+  const wbNames = {2:['Final'],4:['Semifinal','Final'],8:['Quarterfinal','Semifinal','Final'],16:['Round of 16','Quarterfinal','Semifinal','Final']};
+  const wbN = wbNames[n] || WB.map((_,i)=>`Round ${i+1}`);
+
+  renderRounds(document.getElementById('wb-bracket'), WB, wbN, 'WB', WB, LB, GF, GF2, n);
+  renderRounds(document.getElementById('lb-bracket'), LB, LB.map((_,i)=>`LB Round ${i+1}`), 'LB', WB, LB, GF, GF2, n);
+
+  // Grand final
+  const gfEl = document.getElementById('gf-bracket');
+  gfEl.style.display = 'flex';
+  gfEl.style.flexDirection = 'column';
+  gfEl.style.gap = '1rem';
+  const gfSection = document.createElement('div');
+  gfSection.innerHTML = '<div class="round-header" style="margin-bottom:8px">Grand Final</div>';
+  gfSection.appendChild(buildMatchEl(GF, 'GF', 0, WB, LB, GF, GF2, n));
+  gfEl.appendChild(gfSection);
+
+  if (GF.winner === 1) { // LB winner wins GF → bracket reset
+    const gf2Section = document.createElement('div');
+    gf2Section.innerHTML = '<div class="round-header" style="color:var(--c4-light);margin-bottom:8px">Bracket Reset</div>';
+    gf2Section.appendChild(buildMatchEl(GF2, 'GF2', 0, WB, LB, GF, GF2, n));
+    gfEl.appendChild(gf2Section);
+  }
+
+  // Champion display
+  const champ = GF.winner === 0 ? GF.t1 : (GF2.winner !== null ? (GF2.winner === 0 ? GF2.t1 : GF2.t2) : null);
+  if (champ && champ !== '?') {
+    const champEl = document.createElement('div');
+    champEl.style.cssText = 'background:linear-gradient(135deg,rgba(212,175,55,0.2),rgba(212,175,55,0.05));border:2px solid gold;border-radius:16px;padding:1.5rem;text-align:center;margin-top:1rem;';
+    champEl.innerHTML = `<div style="font-size:32px;margin-bottom:8px">🏆</div><div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:gold">${champ}</div><div style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px">Champion</div>`;
+    gfEl.appendChild(champEl);
+  }
+}
+
+function makeMatch(t1, t2) { return {t1, t2, s1:null, s2:null, winner:null}; }
+
+function propagateAll(WB, LB, GF, GF2, n) {
+  // Propagate WB winners forward and losers to LB
+  WB.forEach((round, ri) => {
+    round.forEach((m, mi) => {
+      if (m.winner === null) return;
+      const winner = m.winner === 0 ? m.t1 : m.t2;
+      const loser  = m.winner === 0 ? m.t2 : m.t1;
+      // Advance winner in WB
+      if (ri + 1 < WB.length) {
+        const nm = Math.floor(mi / 2);
+        WB[ri+1][nm][mi%2===0?'t1':'t2'] = winner;
+      } else {
+        // WB winner goes to GF
+        GF.t1 = winner;
+      }
+      // Send loser to LB
+      dropToLB(LB, loser, ri, mi, n);
     });
+  });
+  // Propagate LB
+  LB.forEach((round, ri) => {
+    round.forEach((m, mi) => {
+      if (m.winner === null) return;
+      const winner = m.winner === 0 ? m.t1 : m.t2;
+      if (ri + 1 < LB.length) {
+        const nm = Math.floor(mi / 2);
+        LB[ri+1][nm][mi%2===0?'t1':'t2'] = winner;
+      } else {
+        GF.t2 = winner;
+      }
+    });
+  });
+  // GF
+  if (GF.winner === 0) { /* WB winner wins — done */ }
+  else if (GF.winner === 1) {
+    GF2.t1 = GF.t1;
+    GF2.t2 = GF.t2;
   }
+}
 
-  rounds.forEach((round,ri)=>{
+function dropToLB(LB, loser, wbRound, wbMatch, n) {
+  // Map WB loser to correct LB slot
+  // WB round 0 losers go to LB round 0
+  // WB round 1 losers go to LB round 2, etc.
+  const lbRound = wbRound === 0 ? 0 : wbRound * 2 - 1;
+  if (lbRound >= LB.length) return;
+  const round = LB[lbRound];
+  // Find first available slot
+  for (let m of round) {
+    if (m.t1 === '?') { m.t1 = loser; return; }
+    if (m.t2 === '?') { m.t2 = loser; return; }
+  }
+}
+
+function renderRounds(container, rounds, names, prefix, WB, LB, GF, GF2, n) {
+  container.innerHTML = '';
+  rounds.forEach((round, ri) => {
     const col = document.createElement('div');
     col.className = 'round-col';
-    col.innerHTML = `<div class="round-header">${names[ri]||'Round '+(ri+1)}</div>`;
-
-    round.forEach((m,mi)=>{
+    col.innerHTML = `<div class="round-header">${names[ri]||prefix+' R'+(ri+1)}</div>`;
+    round.forEach((m, mi) => {
       const wrapper = document.createElement('div');
       wrapper.className = 'match-wrapper';
-
-      const matchEl = document.createElement('div');
-      matchEl.className = 'match';
-
-      [0,1].forEach(ti=>{
-        const tName = ti===0 ? m.t1 : m.t2;
-        const tScore= ti===0 ? m.s1 : m.s2;
-        const isWinner = m.winner === ti;
-        const teamDiv = document.createElement('div');
-        teamDiv.className = `match-team ${isWinner?'winner':''}`;
-        teamDiv.innerHTML = `
-          <span class="seed">${ri===0?String.fromCharCode(65+(mi*2+ti)):''}</span>
-          <span class="team-name">${tName}</span>
-          <div class="team-score-wrap">
-            <button class="advance-btn" data-ri="${ri}" data-mi="${mi}" data-team="${ti}">▶</button>
-            <span class="team-score ${isWinner?'winner-score':''}">${tScore!==null?tScore:'—'}</span>
-            <input class="admin-score-input" type="number" value="${tScore||''}" min="0" data-ri="${ri}" data-mi="${mi}" data-team="${ti}"/>
-          </div>`;
-        matchEl.appendChild(teamDiv);
-      });
-
-      // Report score button for non-admin captains
-      if (!isAdmin && m.t1 !== '?' && m.t2 !== 'BYE' && m.winner === null) {
-        const reportBtn = document.createElement('button');
-        reportBtn.className = 'report-score-btn';
-        reportBtn.textContent = '📊 Report Score';
-        reportBtn.addEventListener('click', ()=>openReportScore(ri, mi, m.t1, m.t2));
-        matchEl.appendChild(reportBtn);
-      }
-
-      wrapper.appendChild(matchEl);
+      wrapper.appendChild(buildMatchEl(m, prefix, ri*1000+mi, WB, LB, GF, GF2, n, ri, mi));
       col.appendChild(wrapper);
     });
     container.appendChild(col);
   });
+}
 
-  // Score input handlers
-  container.querySelectorAll('.admin-score-input').forEach(input=>{
-    input.addEventListener('change', async()=>{
-      const allM = rounds.map(r=>r.map(m=>({...m})));
-      const ri=+input.dataset.ri,mi=+input.dataset.mi,team=+input.dataset.team;
-      if(team===0) allM[ri][mi].s1=+input.value; else allM[ri][mi].s2=+input.value;
-      const {s1,s2}=allM[ri][mi];
-      if(s1!==null&&s2!==null){ allM[ri][mi].winner=s1>s2?0:1; if(ri+1<allM.length){ const nm=Math.floor(mi/2); const sl=mi%2===0?'t1':'t2'; allM[ri+1][nm][sl]=allM[ri][mi].winner===0?allM[ri][mi].t1:allM[ri][mi].t2; } }
-      await window.save({matches:allM});
+function buildMatchEl(m, prefix, uid, WB, LB, GF, GF2, n, ri, mi) {
+  const matchEl = document.createElement('div');
+  matchEl.className = 'match';
+
+  [0,1].forEach(ti => {
+    const tName  = ti===0 ? m.t1 : m.t2;
+    const tScore = ti===0 ? m.s1 : m.s2;
+    const isWin  = m.winner === ti;
+    const teamDiv = document.createElement('div');
+    teamDiv.className = `match-team ${isWin?'winner':''}`;
+    teamDiv.innerHTML = `
+      <span class="team-name">${tName||'?'}</span>
+      <div class="team-score-wrap">
+        <button class="advance-btn" data-prefix="${prefix}" data-ri="${ri??''}" data-mi="${mi??''}" data-team="${ti}">▶</button>
+        <span class="team-score ${isWin?'winner-score':''}">${tScore!==null?tScore:'—'}</span>
+        <input class="admin-score-input" type="number" value="${tScore||''}" min="0"
+          data-prefix="${prefix}" data-ri="${ri??''}" data-mi="${mi??''}" data-team="${ti}"/>
+      </div>`;
+    matchEl.appendChild(teamDiv);
+  });
+
+  // Report score for captains
+  if (!isAdmin && m.t1 && m.t1!=='?' && m.t2 && m.t2!=='BYE' && m.winner===null) {
+    const btn = document.createElement('button');
+    btn.className = 'report-score-btn';
+    btn.textContent = '📊 Report Score';
+    btn.addEventListener('click', ()=>openReportScore(ri??0, mi??0, m.t1, m.t2));
+    matchEl.appendChild(btn);
+  }
+
+  // Bind score inputs
+  matchEl.querySelectorAll('.admin-score-input').forEach(input => {
+    input.addEventListener('change', async () => {
+      const val = +input.value;
+      const team = +input.dataset.team;
+      if (team===0) m.s1=val; else m.s2=val;
+      if (m.s1!==null && m.s2!==null) {
+        m.winner = m.s1 > m.s2 ? 0 : 1;
+        await saveBracketState(WB, LB, GF, GF2);
+      }
     });
   });
 
-  // Advance buttons
+  // Bind advance buttons
   if (isAdmin) {
-    container.querySelectorAll('.advance-btn').forEach(btn=>{
-      btn.addEventListener('click', async(e)=>{
+    matchEl.querySelectorAll('.advance-btn').forEach(btn => {
+      btn.addEventListener('click', async e => {
         e.stopPropagation();
-        const ri=+btn.dataset.ri,mi=+btn.dataset.mi,team=+btn.dataset.team;
-        const allM=rounds.map(r=>r.map(m=>({...m})));
-        allM[ri][mi].winner=team;
-        if(ri+1<allM.length){ const nm=Math.floor(mi/2); const sl=mi%2===0?'t1':'t2'; allM[ri+1][nm][sl]=team===0?allM[ri][mi].t1:allM[ri][mi].t2; }
-        await window.save({matches:allM});
+        m.winner = +btn.dataset.team;
+        await saveBracketState(WB, LB, GF, GF2);
       });
     });
   }
+
+  return matchEl;
 }
+
+async function saveBracketState(WB, LB, GF, GF2) {
+  await window.save({ bracketState: {
+    WB: WB.map(r=>r.map(m=>({...m}))),
+    LB: LB.map(r=>r.map(m=>({...m}))),
+    GF: {...GF}, GF2: {...GF2}
+  }});
+}
+
+window.showBracketTab = (tab, btn) => {
+  document.querySelectorAll('.bracket-tab-content').forEach(el => el.style.display='none');
+  document.querySelectorAll('.bracket-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('bt-'+tab).style.display = 'block';
+  btn.classList.add('active');
+};
+
+window.rebuildBracket = () => buildBracket(shuffle(getTeamNames()), null);
 
 // ── Report score (captain flow) ──
 function openReportScore(ri, mi, t1, t2) {
@@ -1196,7 +1347,7 @@ function doLogin(){
     document.getElementById('autoApproveToggle').checked=!!data.autoApprove;
     renderTeamsList();renderCheckin(getTeamNames());renderPending();
     renderVenueSlots();populateEditFields();setupQR();
-    buildBracket(getTeamNames(),data.matches);
+    buildBracket(getTeamNames(),data.bracketState||null);
     buildAssignments(getTeamNames());
   } else {
     document.getElementById('loginError').style.display='block';
