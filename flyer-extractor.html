@@ -479,7 +479,7 @@ document.getElementById('finishBtn').addEventListener('click', async () => {
 
   try {
     await setDoc(doc(db, 'tournaments', id), tournamentData);
-    const link = `http://localhost:3000/tournament.html?id=${id}`;
+    const link = `${window.location.origin}/tournament.html?id=${id}`;
     document.getElementById('shareLink').textContent = link;
     document.getElementById('successBox').style.display = 'block';
     document.getElementById('finishBtn').style.display = 'none';
