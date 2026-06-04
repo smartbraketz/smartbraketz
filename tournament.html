@@ -84,17 +84,20 @@
     /* ── Nav ── */
     .nav-wrap {
       position: sticky; top: 0; z-index: 50;
-      background: rgba(8,8,8,0.85); backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--c1-20);
+      background: rgba(8,8,8,0.92); backdrop-filter: blur(24px);
+      border-bottom: 2px solid var(--c1-30);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
     }
-    .tabs { display: flex; max-width: 960px; margin: 0 auto; padding: 0 1rem; overflow-x: auto; }
+    .tabs { display: flex; max-width: 960px; margin: 0 auto; padding: 0 0.5rem; overflow-x: auto; }
     .tab {
-      flex-shrink: 0; padding: 13px 16px; font-size: 13px; font-weight: 500;
-      color: var(--text-dimmer); cursor: pointer;
-      border-bottom: 2px solid transparent; white-space: nowrap; transition: all 0.2s;
+      flex: 1; min-width: 80px; padding: 18px 12px;
+      font-size: 14px; font-weight: 700; font-family: 'Syne', sans-serif;
+      color: var(--text-dimmer); cursor: pointer; text-align: center;
+      border-bottom: 3px solid transparent; white-space: nowrap; transition: all 0.2s;
+      letter-spacing: 0.02em;
     }
-    .tab:hover { color: var(--text-dim); }
-    .tab.active { color: var(--c1-light); border-bottom-color: var(--c1); }
+    .tab:hover { color: var(--text-dim); background: rgba(255,255,255,0.03); }
+    .tab.active { color: var(--c1-light); border-bottom-color: var(--c1); background: var(--c1-05); }
 
     /* ── Content ── */
     .content { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
@@ -448,6 +451,18 @@
 <div class="admin-bar hidden" id="adminBar">
   <span><span class="admin-badge">ADMIN</span> &nbsp; Managing this tournament</span>
   <span class="admin-exit" id="exitAdmin">Exit</span>
+</div>
+
+<!-- Nav -->
+<div class="nav-wrap">
+  <div class="tabs">
+    <div class="tab active" data-panel="info">Info</div>
+    <div class="tab" data-panel="bracket">Bracket</div>
+    <div class="tab" data-panel="schedule">Schedule</div>
+    <div class="tab" data-panel="assignments">Assignments</div>
+    <div class="tab" data-panel="checkin" id="checkinTab" style="display:none">Check-In</div>
+    <div class="tab" data-panel="admin-tools" id="adminToolsTab" style="display:none">⚙ Admin</div>
+  </div>
 </div>
 
 <!-- Hero -->
